@@ -17,6 +17,8 @@ defmodule MusicSyncWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    get "/spotify/login", SpotifyAuthController, :login
+    get "/spotify/authorize", SpotifyAuthController, :authorize
   end
 
   # Other scopes may use custom stacks.
