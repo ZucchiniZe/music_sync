@@ -14,7 +14,9 @@ defmodule MusicSync.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: MusicSync.PubSub},
       # Start the Endpoint (http/https)
-      MusicSyncWeb.Endpoint
+      MusicSyncWeb.Endpoint,
+      # Start the Finch client (http client)
+      {Finch, name: MusicSync.Finch}
       # Start a worker by calling: MusicSync.Worker.start_link(arg)
       # {MusicSync.Worker, arg}
     ]
