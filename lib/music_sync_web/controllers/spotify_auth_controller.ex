@@ -80,4 +80,5 @@ defmodule MusicSyncWeb.SpotifyAuthController do
   # as a generic and returns an error reason
   defp get_error(%{body: %{"error" => err_map}}) when is_map(err_map), do: err_map["message"]
   defp get_error(%{body: %{"error" => message}}) when is_binary(message), do: message
+  defp get_error(%{body: message}) when is_binary(message), do: message
 end
