@@ -23,11 +23,15 @@ defmodule MusicSyncWeb.SpotifyAuthController do
   end
 
   def authorize(conn, %{"error" => _, "error_description" => desc}) do
-    info_str = "error encountered on spotify's end: #{desc}"
+    info_str = "error encountered with spotify login: #{desc}"
     Logger.error(info_str)
     text(conn, info_str)
   end
 
+  @doc """
+  Login callback for spotify, gives us a `code` that we need to then verify with
+  them.
+  """
   def authorize(conn, params) do
     post_params = [
       code: params["code"],
@@ -48,6 +52,7 @@ defmodule MusicSyncWeb.SpotifyAuthController do
     else
       {:ok, resp} ->
         Logger.error("#{resp.url} failed with a #{resp.status} due to #{get_error(resp)}")
+        text(conn, "failed")
 
       {:error, reason} ->
         IO.inspect(reason)

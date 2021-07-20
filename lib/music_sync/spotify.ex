@@ -15,7 +15,6 @@ defmodule Spotify do
     config = Application.get_env(:music_sync, MusicSync.Spotify)
 
     middleware = [
-      {Tesla.Middleware.BaseUrl, "https://accounts.spotify.com/api"},
       {Tesla.Middleware.BasicAuth,
        username: config[:client_id], password: config[:client_secret]},
       Tesla.Middleware.DecodeJson,
@@ -27,7 +26,7 @@ defmodule Spotify do
   end
 
   def get_token(client, params) do
-    post(client, "/token", params)
+    post(client, "https://accounts.spotify.com/api/token", params)
   end
 
   ## authenticated methods

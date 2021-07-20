@@ -25,17 +25,13 @@ defmodule MusicSync.Accounts do
   Gets a single user.
 
   Raises `Ecto.NoResultsError` if the User does not exist.
-
-  ## Examples
-
-      iex> get_user!(123)
-      %User{}
-
-      iex> get_user!(456)
-      ** (Ecto.NoResultsError)
-
   """
-  def get_user!(id), do: Repo.get!(User, id)
+  def get_user_by_id!(id), do: Repo.get!(User, id)
+
+  @doc """
+  Gets a single user by their refresh token
+  """
+  def get_user_by_refresh_token!(token), do: Repo.get_by!(User, spotify_refresh_token: token)
 
   @doc """
   Creates a user.
@@ -105,6 +101,25 @@ defmodule MusicSync.Accounts do
     user
     |> User.changeset(attrs)
     |> Repo.update()
+  end
+
+  @doc """
+  Make a request to spotify to refresh the access token (they are short lived)
+  and update the user in the database with new tokens
+  """
+  def refresh_spotify_token(%User{} = user) do
+    post_params = %{grant_type: "refresh_token", refresh_token: user.spotify_refresh_token}
+
+    with {:ok, %{status: 200, body: token_info}} <-
+           Spotify.login_client() |> Spotify.get_token(post_params),
+         {:ok, user} <-
+           update_user(user, %{
+             spotify_access_token: token_info["access_token"],
+             spotify_token_expiry:
+               NaiveDateTime.add(NaiveDateTime.utc_now(), token_info["expires_in"])
+           }) do
+      {:ok, user}
+    end
   end
 
   @doc """
