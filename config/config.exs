@@ -26,6 +26,10 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+config :music_sync, MusicSync.Spotify,
+  client_id: "20cf26fd82a84e02a34e9cfa891d29d6",
+  client_secret: "2a7f0ceb011d43a0bd249acbf0621991"
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"
