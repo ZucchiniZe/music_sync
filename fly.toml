@@ -1,0 +1,33 @@
+# fly.toml file generated for music-sync on 2021-07-20T14:31:45-04:00
+
+app = "music-sync"
+
+kill_signal = "SIGTERM"
+kill_timeout = 5
+
+[deploy]
+  release_command = "/app/bin/music_sync eval MusicSync.Release.migrate"
+
+[env]
+
+[[services]]
+  internal_port = 4000
+  protocol = "tcp"
+
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [[services.tcp_checks]]
+    grace_period = "30s"
+    interval = "15s"
+    restart_limit = 6
+    timeout = "2s"
