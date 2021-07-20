@@ -1,12 +1,15 @@
 defmodule MusicSyncWeb.Router do
   use MusicSyncWeb, :router
 
+  import MusicSyncWeb.UserAuth
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_flash
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :fetch_current_user
   end
 
   pipeline :api do
@@ -17,6 +20,7 @@ defmodule MusicSyncWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    get "/logout", SpotifyAuthController, :logout
     get "/spotify/login", SpotifyAuthController, :login
     get "/spotify/authorize", SpotifyAuthController, :authorize
   end

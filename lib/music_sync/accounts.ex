@@ -59,6 +59,8 @@ defmodule MusicSync.Accounts do
   @doc """
   Creates or updates a user from the raw info spotify returns from `/v1/me` and
   their tokens
+
+  returns `{:ok, user}` or `{:error, reason}`
   """
   def create_or_update_user_from_spotify_info(user_info, token_info) do
     user_attrs = %{
@@ -81,7 +83,8 @@ defmodule MusicSync.Accounts do
     |> User.changeset(attrs)
     |> Repo.insert(
       on_conflict: [set: token_attrs |> Map.merge(timestamp) |> Enum.into([])],
-      conflict_target: [:username, :email]
+      conflict_target: [:username, :email],
+      returning: true
     )
   end
 

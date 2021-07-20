@@ -2,9 +2,13 @@ defmodule MusicSyncWeb.SpotifyAuthController do
   use MusicSyncWeb, :controller
   require Logger
   alias MusicSync.Accounts
+  alias MusicSyncWeb.UserAuth
 
   @client_id Application.get_env(:music_sync, MusicSync.Spotify)[:client_id]
 
+  @doc """
+  Redirect to spotify login page with the proper url
+  """
   def login(conn, _params) do
     redirect_uri =
       Routes.spotify_auth_url(MusicSyncWeb.Endpoint, :authorize)
@@ -22,16 +26,22 @@ defmodule MusicSyncWeb.SpotifyAuthController do
     redirect(conn, external: url)
   end
 
-  def authorize(conn, %{"error" => _, "error_description" => desc}) do
-    info_str = "error encountered with spotify login: #{desc}"
-    Logger.error(info_str)
-    text(conn, info_str)
+  def logout(conn, _params) do
+    conn
+    |> put_flash(:info, "Logged out successfully!")
+    |> UserAuth.log_out_user()
   end
 
   @doc """
   Login callback for spotify, gives us a `code` that we need to then verify with
   them.
   """
+  def authorize(conn, %{"error" => _, "error_description" => desc}) do
+    info_str = "error encountered with spotify login: #{desc}"
+    Logger.error(info_str)
+    text(conn, info_str)
+  end
+
   def authorize(conn, params) do
     post_params = [
       code: params["code"],
@@ -45,19 +55,23 @@ defmodule MusicSyncWeb.SpotifyAuthController do
            Spotify.login_client() |> Spotify.get_token(post_params),
          authed_client <- Spotify.authenticated_client(tokens["access_token"]),
          {:ok, %{status: 200, body: user_info}} <- Spotify.get_user_info(authed_client),
-         {:ok, _} <- Accounts.create_or_update_user_from_spotify_info(user_info, tokens) do
+         {:ok, user} <- Accounts.create_or_update_user_from_spotify_info(user_info, tokens) do
       conn
-      |> put_session(:user, tokens["refresh_token"])
-      |> text("authorized")
+      |> UserAuth.log_in_user(user)
     else
       {:ok, resp} ->
         Logger.error("#{resp.url} failed with a #{resp.status} due to #{get_error(resp)}")
-        text(conn, "failed")
+
+        conn
+        |> put_flash(:error, "Failed to log in, please try again")
+        |> redirect(to: "/")
 
       {:error, reason} ->
-        IO.inspect(reason)
-        Logger.error("unable to create user")
-        text(conn, "failed")
+        Logger.error("unable to create user #{inspect(reason)}")
+
+        conn
+        |> put_flash(:error, "Failed to log in, please try again")
+        |> redirect(to: "/")
     end
   end
 
