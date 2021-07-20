@@ -56,6 +56,35 @@ defmodule MusicSync.Accounts do
   end
 
   @doc """
+  Creates or updates a user from the raw info spotify returns from `/v1/me` and
+  their tokens
+  """
+  def create_or_update_user_from_spotify_info(user_info, token_info) do
+    user_attrs = %{
+      email: user_info["email"],
+      name: user_info["display_name"],
+      username: user_info["id"]
+    }
+
+    token_attrs = %{
+      spotify_access_token: token_info["access_token"],
+      spotify_refresh_token: token_info["refresh_token"],
+      spotify_token_expiry: NaiveDateTime.add(NaiveDateTime.utc_now(), token_info["expires_in"])
+    }
+
+    timestamp = %{updated_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)}
+
+    attrs = Map.merge(user_attrs, token_attrs)
+
+    %User{}
+    |> User.changeset(attrs)
+    |> Repo.insert(
+      on_conflict: [set: token_attrs |> Map.merge(timestamp) |> Enum.into([])],
+      conflict_target: [:username, :email]
+    )
+  end
+
+  @doc """
   Updates a user.
 
   ## Examples

@@ -20,14 +20,15 @@ defmodule MusicSync.Accounts.User do
     user
     |> cast(attrs, [
       :email,
+      :name,
       :username,
-      :spotify_id,
       :spotify_access_token,
       :spotify_refresh_token,
       :spotify_token_expiry,
       :lastfm_auth_token,
       :lastfm_session_key
     ])
-    |> validate_required([:email, :spotify_id, :username])
+    |> validate_required([:email, :name, :username])
+    |> unique_constraint([:username, :email])
   end
 end

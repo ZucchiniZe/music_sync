@@ -1,6 +1,7 @@
 defmodule MusicSyncWeb.SpotifyAuthController do
   use MusicSyncWeb, :controller
   require Logger
+  alias MusicSync.Accounts
 
   @client_id Application.get_env(:music_sync, MusicSync.Spotify)[:client_id]
 
@@ -37,18 +38,38 @@ defmodule MusicSyncWeb.SpotifyAuthController do
     ]
 
     case Spotify.login_client() |> Spotify.get_token(post_params) do
-      {:ok, %{body: body}} ->
-        IO.inspect(body)
-        # TODO: create user account here
-        authed_client = Spotify.authenticated_client(body["access_token"])
+      {:ok, %{body: tokens}} ->
+        IO.inspect(tokens)
+        authed_client = Spotify.authenticated_client(tokens["access_token"])
 
-        Spotify.get_user_info(authed_client) |> IO.inspect()
+        case Spotify.get_user_info(authed_client) do
+          {:ok, %{body: %{"error" => %{"message" => message}}}} ->
+            Logger.error("unable to get user info due to spotify api error: #{message}")
+            text(conn, "failed")
+
+          {:ok, %{body: user_info}} ->
+            case Accounts.create_or_update_user_from_spotify_info(user_info, tokens) do
+              {:ok, _} ->
+                conn
+                |> put_session(:user, tokens["refresh_token"])
+                |> text("authorized")
+
+              {:error, reason} ->
+                IO.inspect(reason)
+                Logger.error("unable to create user")
+                text(conn, "failed")
+            end
+
+          {:error, reason} ->
+            IO.inspect(reason)
+            Logger.error("unable to get user info")
+            text(conn, "failed")
+        end
 
       {:error, reason} ->
         IO.inspect(reason)
         Logger.error("unable to get token")
+        text(conn, "failed")
     end
-
-    text(conn, "authorized")
   end
 end
