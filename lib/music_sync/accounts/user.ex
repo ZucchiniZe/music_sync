@@ -6,10 +6,10 @@ defmodule MusicSync.Accounts.User do
     field :email, :string
     field :name, :string
     field :username, :string
+    field :lastfm_username, :string
     field :spotify_access_token, :string
     field :spotify_refresh_token, :string
     field :spotify_token_expiry, :naive_datetime
-    field :lastfm_auth_token, :string
     field :lastfm_session_key, :string
 
     timestamps()
@@ -22,10 +22,10 @@ defmodule MusicSync.Accounts.User do
       :email,
       :name,
       :username,
+      :lastfm_username,
       :spotify_access_token,
       :spotify_refresh_token,
       :spotify_token_expiry,
-      :lastfm_auth_token,
       :lastfm_session_key
     ])
     |> validate_required([:email, :name, :username])

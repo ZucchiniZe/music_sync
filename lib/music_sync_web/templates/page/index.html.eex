@@ -4,6 +4,7 @@
   <%= unless @current_user do %>
   <a href="<%= Routes.spotify_auth_path @conn, :login %>">login with spotify</a>
   <% else %>
+  <a href="<%= Routes.lastfm_auth_path @conn, :link %>">link lastfm</a><br>
   <a href="<%= Routes.spotify_auth_path @conn, :logout %>">logout</a>
   <% end %>
 </section>
