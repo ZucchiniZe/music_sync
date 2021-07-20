@@ -6,7 +6,20 @@ defmodule MusicSyncWeb.SpotifyAuthController do
   @client_secret Application.get_env(:music_sync, MusicSync.Spotify)[:client_secret]
 
   def login(conn, _params) do
-    redirect(conn, external: build_spotify_auth_url())
+    redirect_uri =
+      Routes.spotify_auth_url(MusicSyncWeb.Endpoint, :authorize)
+      |> URI.encode()
+
+    scope =
+      ["user-read-email", "user-library-read", "user-library-modify"]
+      |> Enum.join(" ")
+      |> URI.encode()
+
+    url =
+      "https://accounts.spotify.com/authorize?client_id=#{@client_id}" <>
+        "&response_type=code&scope=#{scope}&redirect_uri=#{redirect_uri}"
+
+    redirect(conn, external: url)
   end
 
   def authorize(conn, %{"error" => _, "error_description" => desc}) do
@@ -40,19 +53,5 @@ defmodule MusicSyncWeb.SpotifyAuthController do
     end
 
     text(conn, "authorized")
-  end
-
-  def build_spotify_auth_url do
-    redirect_uri =
-      Routes.spotify_auth_url(MusicSyncWeb.Endpoint, :authorize)
-      |> URI.encode()
-
-    scope =
-      ["user-read-email", "user-library-read", "user-library-modify"]
-      |> Enum.join(" ")
-      |> URI.encode()
-
-    "https://accounts.spotify.com/authorize?client_id=#{@client_id}" <>
-      "&response_type=code&scope=#{scope}&redirect_uri=#{redirect_uri}"
   end
 end

@@ -4,10 +4,11 @@ defmodule MusicSync.Accounts.User do
 
   schema "users" do
     field :email, :string
+    field :name, :string
     field :username, :string
-    field :spotify_id, :string
     field :spotify_access_token, :string
     field :spotify_refresh_token, :string
+    field :spotify_token_expiry, :naive_datetime
     field :lastfm_auth_token, :string
     field :lastfm_session_key, :string
 
@@ -23,6 +24,7 @@ defmodule MusicSync.Accounts.User do
       :spotify_id,
       :spotify_access_token,
       :spotify_refresh_token,
+      :spotify_token_expiry,
       :lastfm_auth_token,
       :lastfm_session_key
     ])
