@@ -23,12 +23,10 @@ defmodule Lastfm.APISigMiddleware do
       |> Enum.map(fn {key, value} -> "#{key}#{value}" end)
       |> Enum.concat([@client_secret])
       |> Enum.join()
-      |> IO.inspect()
 
     api_sig =
       :crypto.hash(:md5, api_sig)
       |> Base.encode16(case: :lower)
-      |> IO.inspect()
 
     query = query ++ [api_sig: api_sig, format: "json"]
 
