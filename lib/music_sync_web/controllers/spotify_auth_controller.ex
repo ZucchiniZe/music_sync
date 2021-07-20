@@ -51,8 +51,7 @@ defmodule MusicSyncWeb.SpotifyAuthController do
         |> URI.encode()
     ]
 
-    with {:ok, %{status: 200, body: tokens}} <-
-           Spotify.login_client() |> Spotify.get_token(post_params),
+    with {:ok, %{status: 200, body: tokens}} <- Spotify.get_token(post_params),
          authed_client <- Spotify.authenticated_client(tokens["access_token"]),
          {:ok, %{status: 200, body: user_info}} <- Spotify.get_user_info(authed_client),
          {:ok, user} <- Accounts.create_or_update_user_from_spotify_info(user_info, tokens) do

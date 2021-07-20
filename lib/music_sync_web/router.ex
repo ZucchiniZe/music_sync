@@ -21,6 +21,11 @@ defmodule MusicSyncWeb.Router do
 
     get "/", PageController, :index
     get "/logout", SpotifyAuthController, :logout
+  end
+
+  scope "/", MusicSyncWeb do
+    pipe_through [:browser, :redirect_if_user_is_authenticated]
+
     get "/spotify/login", SpotifyAuthController, :login
     get "/spotify/authorize", SpotifyAuthController, :authorize
   end
