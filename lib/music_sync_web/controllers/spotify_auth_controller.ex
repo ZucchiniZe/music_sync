@@ -37,18 +37,28 @@ defmodule MusicSyncWeb.SpotifyAuthController do
         |> URI.encode()
     ]
 
-    with {:ok, %{body: tokens}} <- Spotify.login_client() |> Spotify.get_token(post_params),
+    with {:ok, %{status: 200, body: tokens}} <-
+           Spotify.login_client() |> Spotify.get_token(post_params),
          authed_client <- Spotify.authenticated_client(tokens["access_token"]),
-         {:ok, %{body: user_info}} <- Spotify.get_user_info(authed_client),
+         {:ok, %{status: 200, body: user_info}} <- Spotify.get_user_info(authed_client),
          {:ok, _} <- Accounts.create_or_update_user_from_spotify_info(user_info, tokens) do
       conn
       |> put_session(:user, tokens["refresh_token"])
       |> text("authorized")
     else
+      {:ok, resp} ->
+        Logger.error("#{resp.url} failed with a #{resp.status} due to #{get_error(resp)}")
+
       {:error, reason} ->
         IO.inspect(reason)
         Logger.error("unable to create user")
         text(conn, "failed")
     end
   end
+
+  # When the request succeeds but errors on spotify's end. There are two different
+  # data formats for letting us know that there is an error, this runs over both
+  # as a generic and returns an error reason
+  defp get_error(%{body: %{"error" => err_map}}) when is_map(err_map), do: err_map["message"]
+  defp get_error(%{body: %{"error" => message}}) when is_binary(message), do: message
 end
