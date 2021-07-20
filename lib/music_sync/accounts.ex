@@ -55,6 +55,11 @@ defmodule MusicSync.Accounts do
     |> Repo.insert()
   end
 
+  def create_or_update_user_from_spotify_info(%{"error" => %{"message" => reason}}, _token_info) do
+    # if the api errors for some reason, exit early with an error
+    {:error, reason}
+  end
+
   @doc """
   Creates or updates a user from the raw info spotify returns from `/v1/me` and
   their tokens
