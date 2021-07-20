@@ -3,7 +3,6 @@ defmodule MusicSyncWeb.SpotifyAuthController do
   require Logger
 
   @client_id Application.get_env(:music_sync, MusicSync.Spotify)[:client_id]
-  @client_secret Application.get_env(:music_sync, MusicSync.Spotify)[:client_secret]
 
   def login(conn, _params) do
     redirect_uri =
@@ -23,7 +22,9 @@ defmodule MusicSyncWeb.SpotifyAuthController do
   end
 
   def authorize(conn, %{"error" => _, "error_description" => desc}) do
-    text(conn, "error encountered on spotify's end: #{desc}")
+    info_str = "error encountered on spotify's end: #{desc}"
+    Logger.error(info_str)
+    text(conn, info_str)
   end
 
   def authorize(conn, params) do
@@ -32,14 +33,10 @@ defmodule MusicSyncWeb.SpotifyAuthController do
       grant_type: "authorization_code",
       redirect_uri:
         Routes.spotify_auth_url(MusicSyncWeb.Endpoint, :authorize)
-        |> URI.encode(),
-      client_id: @client_id,
-      client_secret: @client_secret
+        |> URI.encode()
     ]
 
-    client = Spotify.login_client()
-
-    case Spotify.get_token(client, post_params) do
+    case Spotify.login_client() |> Spotify.get_token(post_params) do
       {:ok, %{body: body}} ->
         IO.inspect(body)
         # TODO: create user account here

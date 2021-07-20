@@ -12,8 +12,12 @@ defmodule Spotify do
   ## login methods
   @spec login_client :: Tesla.Client.t()
   def login_client do
+    config = Application.get_env(:music_sync, MusicSync.Spotify)
+
     middleware = [
       {Tesla.Middleware.BaseUrl, "https://accounts.spotify.com/api"},
+      {Tesla.Middleware.BasicAuth,
+       username: config[:client_id], password: config[:client_secret]},
       Tesla.Middleware.DecodeJson,
       Tesla.Middleware.EncodeFormUrlencoded,
       Tesla.Middleware.Logger
