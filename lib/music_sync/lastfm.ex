@@ -17,7 +17,8 @@ defmodule Lastfm do
       {Tesla.Middleware.Query, [api_key: @client_id]},
       Tesla.Middleware.DecodeJson,
       Lastfm.APISigMiddleware,
-      Tesla.Middleware.Logger
+      Tesla.Middleware.Logger,
+      {Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.login"}}
     ]
 
     client = Tesla.client(middleware, {Tesla.Adapter.Finch, name: MusicSync.Finch})
@@ -35,7 +36,8 @@ defmodule Lastfm do
       {Tesla.Middleware.Query, [api_key: @client_id, sk: session_key]},
       Tesla.Middleware.DecodeJson,
       Lastfm.APISigMiddleware,
-      Tesla.Middleware.Logger
+      Tesla.Middleware.Logger,
+      {Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.auth"}}
     ]
 
     Tesla.client(middleware, {Tesla.Adapter.Finch, name: MusicSync.Finch})

@@ -54,7 +54,7 @@ defmodule MusicSyncWeb.Router do
 
     scope "/" do
       pipe_through :browser
-      live_dashboard "/dashboard", metrics: MusicSyncWeb.Telemetry
+      live_dashboard "/dashboard", metrics: MusicSyncWeb.Telemetry, ecto_repos: [MusicSync.Repo]
     end
   end
 end

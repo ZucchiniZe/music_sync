@@ -21,6 +21,12 @@ defmodule MusicSyncWeb.Telemetry do
 
   def metrics do
     [
+      # Custom Metrics
+      summary("tesla.request.stop.duration",
+        tags: [:client, :method, :status],
+        tag_values: &tesla_request_metric_tag_values/1
+      ),
+
       # Phoenix Metrics
       summary("phoenix.endpoint.stop.duration",
         unit: {:native, :millisecond}
@@ -51,5 +57,12 @@ defmodule MusicSyncWeb.Telemetry do
       # This function must call :telemetry.execute/3 and a metric must be added above.
       # {MusicSyncWeb, :count_users, []}
     ]
+  end
+
+  defp tesla_request_metric_tag_values(metadata) do
+    metadata
+    |> Map.put(:url, inspect(metadata.env.url))
+    |> Map.put(:method, inspect(metadata.env.method))
+    |> Map.put(:status, inspect(metadata.env.status))
   end
 end

@@ -22,7 +22,8 @@ defmodule Spotify do
        username: config[:client_id], password: config[:client_secret]},
       Tesla.Middleware.DecodeJson,
       Tesla.Middleware.EncodeFormUrlencoded,
-      Tesla.Middleware.Logger
+      Tesla.Middleware.Logger,
+      {Tesla.Middleware.Telemetry, metadata: %{client: "spotify.login"}}
     ]
 
     client = Tesla.client(middleware, {Tesla.Adapter.Finch, name: MusicSync.Finch})
@@ -51,7 +52,8 @@ defmodule Spotify do
       {Tesla.Middleware.BaseUrl, "https://api.spotify.com/v1"},
       {Tesla.Middleware.BearerAuth, token: access_token},
       Tesla.Middleware.JSON,
-      Tesla.Middleware.Logger
+      Tesla.Middleware.Logger,
+      {Tesla.Middleware.Telemetry, metadata: %{client: "spotify.auth"}}
     ]
 
     Tesla.client(middleware, {Tesla.Adapter.Finch, name: MusicSync.Finch})
