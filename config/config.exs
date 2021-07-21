@@ -34,6 +34,13 @@ config :music_sync, MusicSync.Lastfm,
   client_id: "1588c9955843371816a1f2b2233a5cd9",
   client_secret: "ec15cb50fd817a062e7dfe10b1925f95"
 
+config :music_sync, MusicSync.PromEx,
+  disabled: true,
+  manual_metrics_start_delay: :no_delay,
+  drop_metrics_groups: [],
+  grafana: :disabled,
+  metrics_server: :disabled
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"

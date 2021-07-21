@@ -34,4 +34,17 @@ if config_env() == :prod do
     # IMPORTANT: Or it won't find the DB server
     socket_options: [:inet6],
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+
+  config :music_sync, MusicSync.PromEx,
+    disabled: false,
+    manual_metrics_start_delay: :no_delay,
+    drop_metrics_groups: [],
+    grafana: [
+      host: "https://zucchinize.grafana.net",
+      auth_token: System.get_env("GRAFANA_TOKEN") || "",
+      upload_dashboards_on_start: true,
+      folder_name: "App",
+      annotate_app_lifecycle: true
+    ],
+    metrics_server: [port: 4005]
 end

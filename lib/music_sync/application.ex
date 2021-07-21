@@ -7,10 +7,12 @@ defmodule MusicSync.Application do
 
   def start(_type, _args) do
     children = [
-      # Start the Ecto repository
-      MusicSync.Repo,
+      # Start the prometheus reporter,
+      MusicSync.PromEx,
       # Start the Telemetry supervisor
       MusicSyncWeb.Telemetry,
+      # Start the Ecto repository
+      MusicSync.Repo,
       # Start the PubSub system
       {Phoenix.PubSub, name: MusicSync.PubSub},
       # Start the Endpoint (http/https)

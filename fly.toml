@@ -8,7 +8,9 @@ kill_timeout = 5
 [deploy]
   release_command = "/app/bin/music_sync eval MusicSync.Release.migrate"
 
-[env]
+[metrics]
+  port = 4005
+  path = "/metrics"
 
 [[services]]
   internal_port = 4000
