@@ -7,6 +7,7 @@ defmodule Spotify do
   """
   use Tesla
   require Logger
+  alias MusicSync.Accounts
   alias MusicSync.Accounts.User
 
   ## login methods
@@ -32,10 +33,16 @@ defmodule Spotify do
 
   ## authenticated methods
   @doc """
-  Generate a `Tesla` client with a users access token
+  Generate a `Tesla` client with a users access token. Also checks that the
+  token is valid, if it is expired, refresh it automatically.
   """
-  def authenticated_client(%User{spotify_access_token: token}) do
-    authenticated_client(token)
+  def authenticated_client(%User{spotify_access_token: old_token} = user) do
+    if Accounts.spotify_token_expired?(user) do
+      {:ok, %User{spotify_access_token: new_token}} = Accounts.refresh_spotify_token(user)
+      authenticated_client(new_token)
+    else
+      authenticated_client(old_token)
+    end
   end
 
   def authenticated_client(access_token) do

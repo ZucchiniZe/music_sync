@@ -131,6 +131,13 @@ defmodule MusicSync.Accounts do
     end
   end
 
+  def spotify_token_expired?(%User{spotify_token_expiry: expiry}) do
+    case NaiveDateTime.compare(NaiveDateTime.utc_now(), expiry) do
+      :gt -> true
+      _ -> false
+    end
+  end
+
   @doc """
   Deletes a user.
 
