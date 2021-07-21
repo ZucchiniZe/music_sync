@@ -1,0 +1,6 @@
+<h1><%= @current_user.name %></h1>
+<p>lastfm username: <%= @current_user.lastfm_username %></p>
+<div class="controls">
+<a href="<%= Routes.user_path @conn, :delete %>" class="btn">delete account</a>
+<a href="<%= Routes.lastfm_auth_path @conn, :link %>" class="btn">link lastfm</a>
+</div>

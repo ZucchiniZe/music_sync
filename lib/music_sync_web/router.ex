@@ -20,7 +20,7 @@ defmodule MusicSyncWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
-    get "/logout", SpotifyAuthController, :logout
+    get "/logout", UserController, :logout
   end
 
   scope "/", MusicSyncWeb do
@@ -35,6 +35,9 @@ defmodule MusicSyncWeb.Router do
 
     get "/lastfm/link", LastfmAuthController, :link
     get "/lastfm/authorize", LastfmAuthController, :authorize
+
+    get "/profile", UserController, :show
+    delete "/profile", UserController, :delete
   end
 
   # Other scopes may use custom stacks.

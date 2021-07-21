@@ -26,12 +26,6 @@ defmodule MusicSyncWeb.SpotifyAuthController do
     redirect(conn, external: url)
   end
 
-  def logout(conn, _params) do
-    conn
-    |> put_flash(:info, "Logged out successfully!")
-    |> UserAuth.log_out_user()
-  end
-
   @doc """
   Login callback for spotify, gives us a `code` that we need to then verify with
   them.
