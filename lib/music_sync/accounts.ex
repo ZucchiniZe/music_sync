@@ -64,9 +64,9 @@ defmodule MusicSync.Accounts do
   """
   def create_or_update_user_from_spotify_info(user_info, token_info) do
     user_attrs = %{
-      email: user_info["email"],
-      name: user_info["display_name"],
-      username: user_info["id"]
+      email: user_info |> Map.get("email", ""),
+      name: user_info |> Map.get("display_name", ""),
+      username: user_info |> Map.get("id", "")
     }
 
     token_attrs = %{
@@ -75,14 +75,20 @@ defmodule MusicSync.Accounts do
       spotify_token_expiry: NaiveDateTime.add(NaiveDateTime.utc_now(), token_info["expires_in"])
     }
 
-    timestamp = %{updated_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)}
+    timestamped_attrs =
+      Map.put(
+        token_attrs,
+        :updated_at,
+        NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+      )
+      |> Enum.into([])
 
     attrs = Map.merge(user_attrs, token_attrs)
 
     %User{}
     |> User.changeset(attrs)
     |> Repo.insert(
-      on_conflict: [set: token_attrs |> Map.merge(timestamp) |> Enum.into([])],
+      on_conflict: [set: timestamped_attrs],
       conflict_target: [:username, :email],
       returning: true
     )
