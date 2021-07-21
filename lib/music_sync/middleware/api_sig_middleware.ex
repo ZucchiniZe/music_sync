@@ -1,4 +1,4 @@
-defmodule Lastfm.APISigMiddleware do
+defmodule MusicSync.Middleware.APISigMiddleware do
   @moduledoc """
   Lastfm requires all the query parameters to be hashed together with your
   secret key and then appended when making any requests. This middleware

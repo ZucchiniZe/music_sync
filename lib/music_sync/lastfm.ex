@@ -16,7 +16,7 @@ defmodule Lastfm do
       {Tesla.Middleware.BaseUrl, "http://ws.audioscrobbler.com/2.0"},
       {Tesla.Middleware.Query, [api_key: @client_id]},
       Tesla.Middleware.DecodeJson,
-      Lastfm.APISigMiddleware,
+      MusicSync.Middleware.APISigMiddleware,
       Tesla.Middleware.Logger,
       {Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.login"}}
     ]
@@ -35,7 +35,7 @@ defmodule Lastfm do
       {Tesla.Middleware.BaseUrl, "http://ws.audioscrobbler.com/2.0"},
       {Tesla.Middleware.Query, [api_key: @client_id, sk: session_key]},
       Tesla.Middleware.DecodeJson,
-      Lastfm.APISigMiddleware,
+      MusicSync.Middleware.APISigMiddleware,
       Tesla.Middleware.Logger,
       {Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.auth"}}
     ]
