@@ -47,7 +47,6 @@ defmodule Spotify do
 
   def authenticated_client(access_token) do
     middleware = [
-      MusicSync.Middleware.Retry,
       {Tesla.Middleware.BaseUrl, "https://api.spotify.com/v1"},
       {Tesla.Middleware.BearerAuth, token: access_token},
       Tesla.Middleware.JSON,
@@ -59,55 +58,60 @@ defmodule Spotify do
   end
 
   @doc """
-  Gets the personal info for the authenticated user
+  Gets the personal info for the authenticated user.
   """
   def get_user_info(client) do
     get(client, "/me")
   end
 
   @doc """
-  Get the saved tracks for the authenticated spotify user
+  Get all saved tracks for the authenticated spotify user.
 
   Automatically paginates
   """
-  # TODO: verify this actually works
   def saved_tracks(client) do
-    # TODO: error handling
+    # get the total number of tracks we need to grab and then build a list to
+    # paginate by
     case get(client, "/me/tracks", query: [limit: 1]) do
       {:ok, %{status: 200, body: %{"total" => total_tracks}}} ->
         # generate an array of offset numbers and map over it with http requests
+        # then run a `Task` for each of them to run in parallel.
         0..total_tracks//50
         |> Enum.map(fn offset ->
-          Task.async(fn ->
-            # TODO: error handling
-            Logger.debug("hitting spotify with offset #{offset}")
-
-            case get(client, "/me/tracks", query: [offset: offset, limit: 50]) do
-              {:ok, %{status: 200, body: %{items: items}}} ->
-                Logger.debug("offset #{offset} returned #{length(items)}")
-                items
-
-              {:ok, %{status: 429}} ->
-                Logger.warn("offset #{offset} got rate limited")
-
-              {:ok, _resp} ->
-                Logger.error("misc error")
-
-              {:error, resp} ->
-                Logger.error("hit an error with offset #{offset}")
-                Logger.error(resp |> Map.delete(:body) |> inspect())
-            end
-          end)
+          Task.async(fn -> paginate_saved_tracks(client, offset) end)
         end)
         |> Task.await_many(:infinity)
-
-      # |> Enum.concat()
+        |> Enum.concat()
 
       {:ok, %{body: error}} ->
         error |> inspect |> Logger.error()
 
       {:error, reason} ->
         reason |> inspect |> Logger.error()
+    end
+  end
+
+  # some recursive shenanigans that retry a request when we get rate limited
+  defp paginate_saved_tracks(client, offset, retries \\ 0) when retries <= 10 do
+    case get(client, "/me/tracks", query: [offset: offset, limit: 50]) do
+      {:ok, %{status: 200, body: %{"items" => items}}} ->
+        items
+
+      # we are rate limited if we get a 429 status code and then have to peek into
+      # the Retry-After header to wait than many seconds
+      {:ok, %{status: 429} = resp} ->
+        {_, delay} = List.keyfind(resp.headers, "retry-after", 0, "1")
+        delay = String.to_integer(delay)
+        :timer.sleep(delay * 1000)
+        paginate_saved_tracks(client, offset, retries + 1)
+
+      {:error, resp} ->
+        Logger.error("hit an error with offset #{offset}")
+        Logger.debug(resp |> Map.delete(:body) |> inspect())
+
+      other ->
+        Logger.error("misc error")
+        Logger.debug(inspect(other))
     end
   end
 end
