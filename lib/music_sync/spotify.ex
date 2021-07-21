@@ -40,15 +40,7 @@ defmodule Spotify do
 
   def authenticated_client(access_token) do
     middleware = [
-      {Tesla.Middleware.Retry,
-       [
-         delay: 500,
-         max_delay: 5000,
-         should_retry: fn
-           {:ok, %{status: status}} when status in [429] -> true
-           _ -> false
-         end
-       ]},
+      MusicSync.Middleware.Retry,
       {Tesla.Middleware.BaseUrl, "https://api.spotify.com/v1"},
       {Tesla.Middleware.BearerAuth, token: access_token},
       Tesla.Middleware.JSON,
