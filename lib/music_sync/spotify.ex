@@ -51,7 +51,7 @@ defmodule Spotify do
       {Tesla.Middleware.BaseUrl, "https://api.spotify.com/v1"},
       {Tesla.Middleware.BearerAuth, token: access_token},
       Tesla.Middleware.JSON,
-      Tesla.Middleware.Logger,
+      # Tesla.Middleware.Logger,
       {Tesla.Middleware.Telemetry, metadata: %{client: "spotify.auth"}}
     ]
 
@@ -80,25 +80,34 @@ defmodule Spotify do
         |> Enum.map(fn offset ->
           Task.async(fn ->
             # TODO: error handling
-            Logger.info("hitting spotify with offset #{offset}")
+            Logger.debug("hitting spotify with offset #{offset}")
 
             case get(client, "/me/tracks", query: [offset: offset, limit: 50]) do
               {:ok, %{status: 200, body: %{items: items}}} ->
+                Logger.debug("offset #{offset} returned #{length(items)}")
                 items
 
-              {_status, resp} ->
-                Logger.debug(resp |> Map.delete(:body))
+              {:ok, %{status: 429}} ->
+                Logger.warn("offset #{offset} got rate limited")
+
+              {:ok, _resp} ->
+                Logger.error("misc error")
+
+              {:error, resp} ->
+                Logger.error("hit an error with offset #{offset}")
+                Logger.error(resp |> Map.delete(:body) |> inspect())
             end
           end)
         end)
-        |> Task.await_many()
-        |> Enum.concat()
+        |> Task.await_many(:infinity)
+
+      # |> Enum.concat()
 
       {:ok, %{body: error}} ->
-        IO.inspect(error)
+        error |> inspect |> Logger.error()
 
       {:error, reason} ->
-        IO.inspect(reason)
+        reason |> inspect |> Logger.error()
     end
   end
 end

@@ -4,6 +4,7 @@ defmodule MusicSync.Middleware.Retry do
   that spotify requires for use with rate limiting
   """
   @behaviour Tesla.Middleware
+  require Logger
 
   def call(env, next, _opts) do
     context = %{
@@ -26,6 +27,12 @@ defmodule MusicSync.Middleware.Retry do
     case should_retry?(resp) do
       {true, delay} ->
         :timer.sleep(delay * 1000)
+        {:ok, raw_resp} = resp
+
+        Logger.debug(
+          "retrying #{inspect(raw_resp.url)} #{inspect(raw_resp.query)} in #{delay} seconds"
+        )
+
         context = update_in(context, [:retries], &(&1 + 1))
         retry(env, next, context)
 
@@ -37,8 +44,8 @@ defmodule MusicSync.Middleware.Retry do
   # we are rate limited if we get a 429 status code and then have to peek into
   # the Retry-After header to wait than many seconds
   defp should_retry?({:ok, %{status: 429} = resp}) do
-    {_, delay} = List.keyfind(resp.headers, "retry-after", 0, 1)
-    {true, delay}
+    {_, delay} = List.keyfind(resp.headers, "retry-after", 0, "1")
+    {true, String.to_integer(delay)}
   end
 
   defp should_retry?({:error, _}), do: {true, 1}
