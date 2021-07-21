@@ -43,7 +43,22 @@ defmodule Lastfm do
     Tesla.client(middleware, {Tesla.Adapter.Finch, name: MusicSync.Finch})
   end
 
+  @doc """
+  Get the user's info from the lastfm api
+  """
   def get_user_info(client) do
     get(client, "", query: [method: "user.getInfo"])
+  end
+
+  @doc """
+  Mark a track as loved on lastfm
+
+  ## Examples
+
+      iex> love_track(client, %{artist: "Bon Iver", track: "Hey Ma"})
+      {:ok, Tesla.Env.t()}
+  """
+  def love_track(client, %{artist: artist, track: track}) do
+    post(client, "", query: [method: "track.love", artist: artist, track: track])
   end
 end

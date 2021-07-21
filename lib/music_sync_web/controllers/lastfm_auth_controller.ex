@@ -24,15 +24,13 @@ defmodule MusicSyncWeb.LastfmAuthController do
   We are guaranteed to have a user logged in when executing on this.
   """
   def authorize(conn, params) do
-    with {:ok, %{status: 200, body: %{"session" => %{"key" => session_key}}}} <-
+    with current_user <- conn.assigns[:current_user],
+         {:ok, %{status: 200, body: %{"session" => %{"key" => session_key, "name" => username}}}} <-
            Lastfm.login(params["token"]),
-         client <- Lastfm.authenticated_client(session_key),
-         current_user <- conn.assigns[:current_user],
-         {:ok, %{status: 200, body: lastfm_user_info}} <- Lastfm.get_user_info(client),
          {:ok, user} <-
            Accounts.update_user(current_user, %{
              lastfm_session_key: session_key,
-             lastfm_username: lastfm_user_info["user"]["name"]
+             lastfm_username: username
            }) do
       msg = "Successfully linked lastfm #{user.lastfm_username} with #{user.username}"
       Logger.debug(msg)
