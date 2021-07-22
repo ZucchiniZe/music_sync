@@ -68,6 +68,14 @@ defmodule MusicSyncWeb.SpotifyAuthController do
     end
   end
 
+  def refresh(conn, _params) do
+    conn.assigns[:current_user] |> Accounts.refresh_spotify_token()
+
+    conn
+    |> put_flash(:info, "Refreshed spotify token")
+    |> redirect(to: "/")
+  end
+
   # When the request succeeds but errors on spotify's end. There are two different
   # data formats for letting us know that there is an error, this runs over both
   # as a generic and returns an error reason

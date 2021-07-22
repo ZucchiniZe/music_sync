@@ -33,6 +33,8 @@ defmodule MusicSyncWeb.Router do
   scope "/", MusicSyncWeb do
     pipe_through [:browser, :require_authenticated_user]
 
+    get "/spotify/refresh", SpotifyAuthController, :refresh
+
     get "/lastfm/link", LastfmAuthController, :link
     get "/lastfm/authorize", LastfmAuthController, :authorize
 
