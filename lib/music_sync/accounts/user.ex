@@ -31,4 +31,11 @@ defmodule MusicSync.Accounts.User do
     |> validate_required([:email, :name, :username])
     |> unique_constraint([:username, :email])
   end
+
+  def spotify_token_expired?(%__MODULE__{spotify_token_expiry: expiry}) do
+    case NaiveDateTime.compare(NaiveDateTime.utc_now(), expiry) do
+      :gt -> true
+      _ -> false
+    end
+  end
 end

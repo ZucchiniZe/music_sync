@@ -37,7 +37,7 @@ defmodule Spotify do
   token is valid, if it is expired, refresh it automatically.
   """
   def authenticated_client(%User{spotify_access_token: old_token} = user) do
-    if Accounts.spotify_token_expired?(user) do
+    if Accounts.User.spotify_token_expired?(user) do
       {:ok, %User{spotify_access_token: new_token}} = Accounts.refresh_spotify_token(user)
       authenticated_client(new_token)
     else
