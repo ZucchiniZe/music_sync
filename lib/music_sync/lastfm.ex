@@ -16,7 +16,7 @@ defmodule Lastfm do
       {Tesla.Middleware.BaseUrl, "http://ws.audioscrobbler.com/2.0"},
       {Tesla.Middleware.Query, [api_key: @client_id]},
       Tesla.Middleware.DecodeJson,
-      MusicSync.Middleware.APISigMiddleware,
+      MusicSync.Middleware.APISignature,
       Tesla.Middleware.Logger,
       {Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.login"}}
     ]
@@ -35,7 +35,7 @@ defmodule Lastfm do
       {Tesla.Middleware.BaseUrl, "http://ws.audioscrobbler.com/2.0"},
       {Tesla.Middleware.Query, [api_key: @client_id, sk: session_key]},
       Tesla.Middleware.DecodeJson,
-      MusicSync.Middleware.APISigMiddleware,
+      MusicSync.Middleware.APISignature,
       Tesla.Middleware.Logger,
       {Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.auth"}}
     ]
@@ -59,6 +59,18 @@ defmodule Lastfm do
       {:ok, Tesla.Env.t()}
   """
   def love_track(client, %{artist: artist, track: track}) do
-    post(client, "", query: [method: "track.love", artist: artist, track: track])
+    post(client, "", "", query: [method: "track.love", artist: artist, track: track])
+  end
+
+  @doc """
+  Unmark a track as loved on lastfm
+
+  ## Examples
+
+      iex> unlove_track(client, %{artist: "Bon Iver", track: "Hey Ma"})
+      {:ok, Tesla.Env.t()}
+  """
+  def unlove_track(client, %{artist: artist, track: track}) do
+    post(client, "", "", query: [method: "track.unlove", artist: artist, track: track])
   end
 end

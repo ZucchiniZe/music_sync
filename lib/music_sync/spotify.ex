@@ -80,6 +80,7 @@ defmodule Spotify do
         |> Enum.map(fn offset ->
           Task.async(fn -> paginate_saved_tracks(client, offset) end)
         end)
+        # account for the rate limiting delays
         |> Task.await_many(:infinity)
         |> Enum.concat()
 
