@@ -9,7 +9,7 @@ defmodule Service.Lastfm do
   require Logger
   alias MusicSync.Accounts.User
 
-  @client_id Application.get_env(:music_sync, MusicSync.Lastfm)[:client_id]
+  @client_id Application.compile_env!(:music_sync, [MusicSync.Lastfm, :client_id])
   @middleware [
     {Tesla.Middleware.BaseUrl, "http://ws.audioscrobbler.com/2.0"},
     {Tesla.Middleware.Query, [api_key: @client_id]},

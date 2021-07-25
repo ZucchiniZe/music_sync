@@ -48,7 +48,8 @@ defmodule MusicSync.MixProject do
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:tesla, "~> 1.4.2"},
-      {:finch, "~> 0.7"}
+      {:finch, "~> 0.7"},
+      {:credo, "~> 1.5", only: [:dev, :test], runtime: false}
     ]
   end
 

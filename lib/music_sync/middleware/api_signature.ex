@@ -5,7 +5,7 @@ defmodule MusicSync.Middleware.APISignature do
   automatically handles that.
   """
   @behaviour Tesla.Middleware
-  @client_secret Application.get_env(:music_sync, MusicSync.Lastfm)[:client_secret]
+  @client_secret Application.compile_env!(:music_sync, [MusicSync.Lastfm, :client_secret])
   require Logger
 
   @impl Tesla.Middleware

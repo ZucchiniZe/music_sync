@@ -4,7 +4,7 @@ defmodule MusicSyncWeb.LastfmAuthController do
   alias MusicSync.Accounts
   alias Service.Lastfm
 
-  @client_id Application.get_env(:music_sync, MusicSync.Lastfm)[:client_id]
+  @client_id Application.compile_env!(:music_sync, [MusicSync.Lastfm, :client_id])
 
   @doc """
   Redirect to lastfm auth page with the proper url

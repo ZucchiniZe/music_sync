@@ -5,7 +5,7 @@ defmodule MusicSyncWeb.SpotifyAuthController do
   alias MusicSyncWeb.UserAuth
   alias Service.Spotify
 
-  @client_id Application.get_env(:music_sync, MusicSync.Spotify)[:client_id]
+  @client_id Application.compile_env!(:music_sync, [MusicSync.Spotify, :client_id])
 
   @doc """
   Redirect to spotify login page with the proper url
