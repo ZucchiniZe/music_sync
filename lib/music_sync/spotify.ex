@@ -69,6 +69,7 @@ defmodule Spotify do
 
   Automatically paginates
   """
+  # TODO: implement some telemetry for all this
   def saved_tracks(client) do
     # get the total number of tracks we need to grab and then build a list to
     # paginate by
@@ -87,8 +88,8 @@ defmodule Spotify do
       {:ok, %{body: error}} ->
         error |> inspect |> Logger.error()
 
-      {:error, reason} ->
-        reason |> inspect |> Logger.error()
+      {:error, error} ->
+        error |> inspect |> Logger.error()
     end
   end
 
@@ -108,7 +109,7 @@ defmodule Spotify do
 
       {:error, resp} ->
         Logger.error("hit an error with offset #{offset}")
-        Logger.debug(resp |> Map.delete(:body) |> inspect())
+        Logger.debug(inspect(resp))
 
       other ->
         Logger.error("misc error")
