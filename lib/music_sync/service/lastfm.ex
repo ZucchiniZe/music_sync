@@ -10,16 +10,17 @@ defmodule Service.Lastfm do
   alias MusicSync.Accounts.User
 
   @client_id Application.get_env(:music_sync, MusicSync.Lastfm)[:client_id]
+  @middleware [
+    {Tesla.Middleware.BaseUrl, "http://ws.audioscrobbler.com/2.0"},
+    {Tesla.Middleware.Query, [api_key: @client_id]},
+    Tesla.Middleware.DecodeJson,
+    MusicSync.Middleware.APISignature,
+    Tesla.Middleware.Logger
+  ]
 
   def login(token) do
-    middleware = [
-      {Tesla.Middleware.BaseUrl, "http://ws.audioscrobbler.com/2.0"},
-      {Tesla.Middleware.Query, [api_key: @client_id]},
-      Tesla.Middleware.DecodeJson,
-      MusicSync.Middleware.APISignature,
-      Tesla.Middleware.Logger,
-      {Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.login"}}
-    ]
+    middleware =
+      @middleware ++ [{Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.login"}}]
 
     client = Tesla.client(middleware, {Tesla.Adapter.Finch, name: MusicSync.Finch})
 
@@ -31,14 +32,13 @@ defmodule Service.Lastfm do
   end
 
   def authenticated_client(session_key) do
-    middleware = [
-      {Tesla.Middleware.BaseUrl, "http://ws.audioscrobbler.com/2.0"},
-      {Tesla.Middleware.Query, [api_key: @client_id, sk: session_key]},
-      Tesla.Middleware.DecodeJson,
-      MusicSync.Middleware.APISignature,
-      Tesla.Middleware.Logger,
-      {Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.auth"}}
-    ]
+    middleware =
+      List.keyreplace(
+        @middleware,
+        Tesla.Middleware.Query,
+        0,
+        {Tesla.Middleware.Query, [api_key: @client_id, sk: session_key]}
+      ) ++ [{Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.auth"}}]
 
     Tesla.client(middleware, {Tesla.Adapter.Finch, name: MusicSync.Finch})
   end
