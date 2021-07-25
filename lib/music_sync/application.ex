@@ -18,12 +18,7 @@ defmodule MusicSync.Application do
       # Start the Endpoint (http/https)
       MusicSyncWeb.Endpoint,
       # Start the Finch client (http client)
-      {Finch,
-       name: MusicSync.Finch,
-       pools: %{
-         "https://api.spotify.com" => [protocol: :http2],
-         default: [max_idle_time: 120_000]
-       }}
+      {Finch, name: MusicSync.Finch, pools: %{default: [max_idle_time: 120_000]}}
       # Start a worker by calling: MusicSync.Worker.start_link(arg)
       # {MusicSync.Worker, arg}
     ]
