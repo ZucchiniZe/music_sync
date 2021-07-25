@@ -2,6 +2,7 @@ defmodule MusicSyncWeb.LastfmAuthController do
   use MusicSyncWeb, :controller
   require Logger
   alias MusicSync.Accounts
+  alias Service.Lastfm
 
   @client_id Application.get_env(:music_sync, MusicSync.Lastfm)[:client_id]
 

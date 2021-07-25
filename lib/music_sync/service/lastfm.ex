@@ -1,4 +1,4 @@
-defmodule Lastfm do
+defmodule Service.Lastfm do
   @moduledoc """
   Interfacing with the last.fm api
 

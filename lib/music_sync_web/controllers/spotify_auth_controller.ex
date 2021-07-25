@@ -3,6 +3,7 @@ defmodule MusicSyncWeb.SpotifyAuthController do
   require Logger
   alias MusicSync.Accounts
   alias MusicSyncWeb.UserAuth
+  alias Service.Spotify
 
   @client_id Application.get_env(:music_sync, MusicSync.Spotify)[:client_id]
 

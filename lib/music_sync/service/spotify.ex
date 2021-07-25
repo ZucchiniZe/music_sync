@@ -1,4 +1,4 @@
-defmodule Spotify do
+defmodule Service.Spotify do
   @moduledoc """
   Interfacing with the Spotify API
 
@@ -50,7 +50,7 @@ defmodule Spotify do
       {Tesla.Middleware.BaseUrl, "https://api.spotify.com/v1"},
       {Tesla.Middleware.BearerAuth, token: access_token},
       Tesla.Middleware.JSON,
-      # Tesla.Middleware.Logger,
+      Tesla.Middleware.Logger,
       {Tesla.Middleware.Telemetry, metadata: %{client: "spotify.auth"}}
     ]
 
@@ -95,6 +95,9 @@ defmodule Spotify do
 
   # some recursive shenanigans that retry a request when we get rate limited
   defp paginate_saved_tracks(client, offset, retries \\ 0) when retries <= 10 do
+    # we _really_ don't need to log these requests
+    client = %Tesla.Client{client | pre: List.keydelete(client.pre, Tesla.Middleware.Logger, 0)}
+
     case get(client, "/me/tracks", query: [offset: offset, limit: 50]) do
       {:ok, %{status: 200, body: %{"items" => items}}} ->
         items
