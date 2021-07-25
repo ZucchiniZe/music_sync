@@ -70,6 +70,7 @@ defmodule Service.Spotify do
   Automatically paginates
   """
   # TODO: implement some telemetry for all this
+  # TODO: some kind of date checking function so we only grab the most recent needed tracks
   def saved_tracks(client) do
     # get the total number of tracks we need to grab and then build a list to
     # paginate by

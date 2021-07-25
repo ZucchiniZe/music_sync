@@ -120,7 +120,7 @@ defmodule MusicSync.Accounts do
     post_params = %{grant_type: "refresh_token", refresh_token: user.spotify_refresh_token}
 
     with {:ok, %{status: 200, body: token_info}} <-
-           Spotify.get_token(post_params),
+           Service.Spotify.get_token(post_params),
          {:ok, user} <-
            update_user(user, %{
              spotify_access_token: token_info["access_token"],
