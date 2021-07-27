@@ -15,7 +15,11 @@ defmodule MusicSync.Middleware.APISignature do
     |> Tesla.run(next)
   end
 
-  defp sign_query(env) do
+  @doc """
+  Sign the query parameters and add the client secret to the end
+  """
+  @spec sign_query(Tesla.Env.t()) :: Tesla.Env.t()
+  def sign_query(env) do
     query = env.query |> Enum.sort()
 
     api_sig =
