@@ -8,14 +8,19 @@ defmodule MusicSync.AccountsTest do
 
     @time ~N[2021-07-27 03:25:32]
 
+    # lastfm session key is a md5 hash so 32 char long
+    # spotify access token is 176 char long
+    # spotify refresh token is 131 char long
     @valid_attrs %{
       email: "some email",
       name: "some name",
       username: "some username",
       lastfm_username: "some lastfm_username",
-      lastfm_session_key: "some lastfm_session_key",
-      spotify_access_token: "some spotify_access_token",
-      spotify_refresh_token: "some spotify_refresh_token",
+      lastfm_session_key: "ATEon82JKYhzgd2Ae58APq6RwxstlAfA",
+      spotify_access_token:
+        "j11RKKS-46jqe60iggOcVqhPD6BAlBfig-Zq2qq1KZhGtlOajBi58INVKIj-_cb9K6Vlg-bk32iCB3YSBSv6WC3MgZqrdCjb3NSIuCiAY7RzhP-6PVV4KEzDUA_lY_DBk547L4aF-5x1SB6chWNVFhVcCggSbF5VtFSZ4xIbN4_1cSge",
+      spotify_refresh_token:
+        "2gGg3QRgcrXOGW9unoLbSkCiwKeTiyaMLVsIYbUCgII_VA5Exri0r3KIAt5tE1ArctK9wTw-rH8Q--rEMBAG90cAr2C8HAAF3MCKjcAJ0IgrF-KrQGYiFLEg3d511gdzAwx",
       spotify_token_expiry: @time
     }
     @update_attrs %{
@@ -23,9 +28,11 @@ defmodule MusicSync.AccountsTest do
       name: "some updated name",
       username: "some updated username",
       lastfm_username: "some updated lastfm_username",
-      lastfm_session_key: "some updated lastfm_session_key",
-      spotify_access_token: "some updated spotify_access_token",
-      spotify_refresh_token: "some updated spotify_refresh_token",
+      lastfm_session_key: "d8e8fca2dc0f896fd7cb4cb0031ba249",
+      spotify_access_token:
+        "gFrlAwMfJTJrwxC_-P5NPSCtkI3CHwvX6rJYk0wGCrw_gLGcLnBZHdwCowGy0XrAK5BcLKCC0U-g1UcrXbxC_9NNwuwCJxIMJRuntiUrK5rrA8wrer5Mb80abcuUJLMl3P1EI8HLGYnQBogrrXkx0iUk85eUKU-lbLflrB59kGN39vXt",
+      spotify_refresh_token:
+        "jbl9_grIJxIrwFU8idOWTirAxNPHj3CryVPUf9wmCQ8kkQwTJxli_YIxOPLsKv8uBIkC8JtaDBwgAQ1FbknLDCrmBwgbQUN2scSJ_1CoiKIk-jx-YwOblFEIrPwTUy95K3a",
       spotify_token_expiry: NaiveDateTime.add(@time, 1 * 60 * 60)
     }
     @invalid_attrs %{
@@ -69,9 +76,14 @@ defmodule MusicSync.AccountsTest do
       assert user.name == "some name"
       assert user.username == "some username"
       assert user.lastfm_username == "some lastfm_username"
-      assert user.lastfm_session_key == "some lastfm_session_key"
-      assert user.spotify_access_token == "some spotify_access_token"
-      assert user.spotify_refresh_token == "some spotify_refresh_token"
+      assert user.lastfm_session_key == "ATEon82JKYhzgd2Ae58APq6RwxstlAfA"
+
+      assert user.spotify_access_token ==
+               "j11RKKS-46jqe60iggOcVqhPD6BAlBfig-Zq2qq1KZhGtlOajBi58INVKIj-_cb9K6Vlg-bk32iCB3YSBSv6WC3MgZqrdCjb3NSIuCiAY7RzhP-6PVV4KEzDUA_lY_DBk547L4aF-5x1SB6chWNVFhVcCggSbF5VtFSZ4xIbN4_1cSge"
+
+      assert user.spotify_refresh_token ==
+               "2gGg3QRgcrXOGW9unoLbSkCiwKeTiyaMLVsIYbUCgII_VA5Exri0r3KIAt5tE1ArctK9wTw-rH8Q--rEMBAG90cAr2C8HAAF3MCKjcAJ0IgrF-KrQGYiFLEg3d511gdzAwx"
+
       assert user.spotify_token_expiry == @time
     end
 
@@ -86,9 +98,14 @@ defmodule MusicSync.AccountsTest do
       assert user.name == "some updated name"
       assert user.username == "some updated username"
       assert user.lastfm_username == "some updated lastfm_username"
-      assert user.lastfm_session_key == "some updated lastfm_session_key"
-      assert user.spotify_access_token == "some updated spotify_access_token"
-      assert user.spotify_refresh_token == "some updated spotify_refresh_token"
+      assert user.lastfm_session_key == "d8e8fca2dc0f896fd7cb4cb0031ba249"
+
+      assert user.spotify_access_token ==
+               "gFrlAwMfJTJrwxC_-P5NPSCtkI3CHwvX6rJYk0wGCrw_gLGcLnBZHdwCowGy0XrAK5BcLKCC0U-g1UcrXbxC_9NNwuwCJxIMJRuntiUrK5rrA8wrer5Mb80abcuUJLMl3P1EI8HLGYnQBogrrXkx0iUk85eUKU-lbLflrB59kGN39vXt"
+
+      assert user.spotify_refresh_token ==
+               "jbl9_grIJxIrwFU8idOWTirAxNPHj3CryVPUf9wmCQ8kkQwTJxli_YIxOPLsKv8uBIkC8JtaDBwgAQ1FbknLDCrmBwgbQUN2scSJ_1CoiKIk-jx-YwOblFEIrPwTUy95K3a"
+
       assert user.spotify_token_expiry == NaiveDateTime.add(@time, 1 * 60 * 60)
     end
 
