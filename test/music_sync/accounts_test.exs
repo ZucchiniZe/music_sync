@@ -6,9 +6,38 @@ defmodule MusicSync.AccountsTest do
   describe "users" do
     alias MusicSync.Accounts.User
 
-    @valid_attrs %{email: "some email", lastfm_auth_token: "some lastfm_auth_token", lastfm_session_key: "some lastfm_session_key", spotify_access_token: "some spotify_access_token", spotify_id: "some spotify_id", spotify_refresh_token: "some spotify_refresh_token", username: "some username"}
-    @update_attrs %{email: "some updated email", lastfm_auth_token: "some updated lastfm_auth_token", lastfm_session_key: "some updated lastfm_session_key", spotify_access_token: "some updated spotify_access_token", spotify_id: "some updated spotify_id", spotify_refresh_token: "some updated spotify_refresh_token", username: "some updated username"}
-    @invalid_attrs %{email: nil, lastfm_auth_token: nil, lastfm_session_key: nil, spotify_access_token: nil, spotify_id: nil, spotify_refresh_token: nil, username: nil}
+    @time ~N[2021-07-27 03:25:32]
+
+    @valid_attrs %{
+      email: "some email",
+      name: "some name",
+      username: "some username",
+      lastfm_username: "some lastfm_username",
+      lastfm_session_key: "some lastfm_session_key",
+      spotify_access_token: "some spotify_access_token",
+      spotify_refresh_token: "some spotify_refresh_token",
+      spotify_token_expiry: @time
+    }
+    @update_attrs %{
+      email: "some updated email",
+      name: "some updated name",
+      username: "some updated username",
+      lastfm_username: "some updated lastfm_username",
+      lastfm_session_key: "some updated lastfm_session_key",
+      spotify_access_token: "some updated spotify_access_token",
+      spotify_refresh_token: "some updated spotify_refresh_token",
+      spotify_token_expiry: NaiveDateTime.add(@time, 1 * 60 * 60)
+    }
+    @invalid_attrs %{
+      email: nil,
+      name: nil,
+      username: nil,
+      lastfm_username: nil,
+      lastfm_session_key: nil,
+      spotify_access_token: nil,
+      spotify_refresh_token: nil,
+      spotify_token_expiry: nil
+    }
 
     def user_fixture(attrs \\ %{}) do
       {:ok, user} =
@@ -24,20 +53,26 @@ defmodule MusicSync.AccountsTest do
       assert Accounts.list_users() == [user]
     end
 
-    test "get_user!/1 returns the user with given id" do
+    test "get_user_by_id!/1 returns the user with given id" do
       user = user_fixture()
-      assert Accounts.get_user!(user.id) == user
+      assert Accounts.get_user_by_id!(user.id) == user
+    end
+
+    test "get_user_by_refresh_token/1 returns the user with a given refresh token" do
+      user = user_fixture()
+      assert Accounts.get_user_by_refresh_token!(user.spotify_refresh_token) == user
     end
 
     test "create_user/1 with valid data creates a user" do
       assert {:ok, %User{} = user} = Accounts.create_user(@valid_attrs)
       assert user.email == "some email"
-      assert user.lastfm_auth_token == "some lastfm_auth_token"
+      assert user.name == "some name"
+      assert user.username == "some username"
+      assert user.lastfm_username == "some lastfm_username"
       assert user.lastfm_session_key == "some lastfm_session_key"
       assert user.spotify_access_token == "some spotify_access_token"
-      assert user.spotify_id == "some spotify_id"
       assert user.spotify_refresh_token == "some spotify_refresh_token"
-      assert user.username == "some username"
+      assert user.spotify_token_expiry == @time
     end
 
     test "create_user/1 with invalid data returns error changeset" do
@@ -48,24 +83,25 @@ defmodule MusicSync.AccountsTest do
       user = user_fixture()
       assert {:ok, %User{} = user} = Accounts.update_user(user, @update_attrs)
       assert user.email == "some updated email"
-      assert user.lastfm_auth_token == "some updated lastfm_auth_token"
+      assert user.name == "some updated name"
+      assert user.username == "some updated username"
+      assert user.lastfm_username == "some updated lastfm_username"
       assert user.lastfm_session_key == "some updated lastfm_session_key"
       assert user.spotify_access_token == "some updated spotify_access_token"
-      assert user.spotify_id == "some updated spotify_id"
       assert user.spotify_refresh_token == "some updated spotify_refresh_token"
-      assert user.username == "some updated username"
+      assert user.spotify_token_expiry == NaiveDateTime.add(@time, 1 * 60 * 60)
     end
 
     test "update_user/2 with invalid data returns error changeset" do
       user = user_fixture()
       assert {:error, %Ecto.Changeset{}} = Accounts.update_user(user, @invalid_attrs)
-      assert user == Accounts.get_user!(user.id)
+      assert user == Accounts.get_user_by_id!(user.id)
     end
 
     test "delete_user/1 deletes the user" do
       user = user_fixture()
       assert {:ok, %User{}} = Accounts.delete_user(user)
-      assert_raise Ecto.NoResultsError, fn -> Accounts.get_user!(user.id) end
+      assert_raise Ecto.NoResultsError, fn -> Accounts.get_user_by_id!(user.id) end
     end
 
     test "change_user/1 returns a user changeset" do
