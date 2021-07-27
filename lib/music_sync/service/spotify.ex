@@ -10,6 +10,12 @@ defmodule Service.Spotify do
   alias MusicSync.Accounts
   alias MusicSync.Accounts.User
 
+  @adapter Application.compile_env(
+             :tesla,
+             :adapter,
+             {Tesla.Adapter.Finch, name: MusicSync.Finch}
+           )
+
   ## login methods
   @doc """
   Create a short lived tesla client and then request auth and refresh tokens
@@ -27,7 +33,7 @@ defmodule Service.Spotify do
       {Tesla.Middleware.Telemetry, metadata: %{client: "spotify.login"}}
     ]
 
-    client = Tesla.client(middleware, {Tesla.Adapter.Finch, name: MusicSync.Finch})
+    client = Tesla.client(middleware, @adapter)
     post(client, "https://accounts.spotify.com/api/token", params)
   end
 
@@ -54,7 +60,7 @@ defmodule Service.Spotify do
       {Tesla.Middleware.Telemetry, metadata: %{client: "spotify.auth"}}
     ]
 
-    Tesla.client(middleware, {Tesla.Adapter.Finch, name: MusicSync.Finch})
+    Tesla.client(middleware, @adapter)
   end
 
   @doc """

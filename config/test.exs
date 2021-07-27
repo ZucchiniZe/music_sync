@@ -20,3 +20,6 @@ config :music_sync, MusicSyncWeb.Endpoint,
 
 # Print only warnings and errors during test
 config :logger, level: :warn
+
+# we don't want to make any requests in testing
+config :tesla, adapter: Tesla.Mock

@@ -10,6 +10,11 @@ defmodule Service.Lastfm do
   alias MusicSync.Accounts.User
 
   @client_id Application.compile_env!(:music_sync, [MusicSync.Lastfm, :client_id])
+  @adapter Application.compile_env(
+             :tesla,
+             :adapter,
+             {Tesla.Adapter.Finch, name: MusicSync.Finch}
+           )
   @middleware [
     {Tesla.Middleware.BaseUrl, "http://ws.audioscrobbler.com/2.0"},
     {Tesla.Middleware.Query, [api_key: @client_id]},
@@ -22,7 +27,7 @@ defmodule Service.Lastfm do
     middleware =
       @middleware ++ [{Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.login"}}]
 
-    client = Tesla.client(middleware, {Tesla.Adapter.Finch, name: MusicSync.Finch})
+    client = Tesla.client(middleware, @adapter)
 
     get(client, "", query: [token: token, method: "auth.getSession"])
   end
@@ -40,7 +45,7 @@ defmodule Service.Lastfm do
         {Tesla.Middleware.Query, [api_key: @client_id, sk: session_key]}
       ) ++ [{Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.auth"}}]
 
-    Tesla.client(middleware, {Tesla.Adapter.Finch, name: MusicSync.Finch})
+    Tesla.client(middleware, @adapter)
   end
 
   @doc """

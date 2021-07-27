@@ -6,7 +6,20 @@ defmodule MusicSync.AccountsTest do
   describe "users" do
     alias MusicSync.Accounts.User
 
-    @time ~N[2021-07-27 03:25:32]
+    @time ~N[2021-07-27 01:00:00]
+
+    setup do
+      Tesla.Mock.mock(fn
+        %{url: "https://accounts.spotify.com/api/token", method: :post} ->
+          Tesla.Mock.json(%{
+            access_token:
+              "xHXx1TLwFrB1ywblrNrA0oibkUlMGDUU9ArBokAUBQKa5NwIaxnKS19UVIWMSrwLxkfDSKQmeCsJf9Lbrcr_JBNr9TQgEVJ9MLFrrRIfklw13GLxbMPrKAMIxQ5SbAQ8CkKc1zlLwDA9D3RS9rVKBYwbIrSbJvTGbCTcRsLUcw-6gLiw",
+            expires_in: 3600
+          })
+      end)
+
+      :ok
+    end
 
     # lastfm session key is a md5 hash so 32 char long
     # spotify access token is 176 char long
@@ -91,6 +104,12 @@ defmodule MusicSync.AccountsTest do
       assert {:error, %Ecto.Changeset{}} = Accounts.create_user(@invalid_attrs)
     end
 
+    test "create_or_update_user_from_spotify_info/2 creates a valid user from valid input data"
+
+    test "create_or_update_user_from_spotify_info/2 with invalid data returns an error"
+
+    test "create_or_update_user_from_spotify_info/2 with error from spotify returns error"
+
     test "update_user/2 with valid data updates the user" do
       user = user_fixture()
       assert {:ok, %User{} = user} = Accounts.update_user(user, @update_attrs)
@@ -113,6 +132,19 @@ defmodule MusicSync.AccountsTest do
       user = user_fixture()
       assert {:error, %Ecto.Changeset{}} = Accounts.update_user(user, @invalid_attrs)
       assert user == Accounts.get_user_by_id!(user.id)
+    end
+
+    test "refresh_spotify_token/1 updates the spotify token" do
+      user = user_fixture()
+      assert {:ok, %User{} = user} = Accounts.refresh_spotify_token(user)
+
+      assert user.spotify_access_token ==
+               "xHXx1TLwFrB1ywblrNrA0oibkUlMGDUU9ArBokAUBQKa5NwIaxnKS19UVIWMSrwLxkfDSKQmeCsJf9Lbrcr_JBNr9TQgEVJ9MLFrrRIfklw13GLxbMPrKAMIxQ5SbAQ8CkKc1zlLwDA9D3RS9rVKBYwbIrSbJvTGbCTcRsLUcw-6gLiw"
+
+      assert user.spotify_token_expiry ==
+               NaiveDateTime.utc_now()
+               |> NaiveDateTime.add(3600)
+               |> NaiveDateTime.truncate(:second)
     end
 
     test "delete_user/1 deletes the user" do
