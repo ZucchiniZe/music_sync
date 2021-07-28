@@ -1,4 +1,5 @@
 defmodule MusicSync.PromEx do
+  @moduledoc false
   use PromEx, otp_app: :music_sync
 
   alias PromEx.Plugins
