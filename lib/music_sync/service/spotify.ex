@@ -98,14 +98,18 @@ defmodule Service.Spotify do
         # if the most recent track added to the library is more recent than the
         # saved track in the database, then get the saved tracks
         if NaiveDateTime.compare(most_recent_track, latest_track_date) == :gt do
-          get_saved_tracks(client, total_tracks)
+          {:ok, get_saved_tracks(client, total_tracks)}
+        else
+          {:error, "no recent tracks"}
         end
 
       {:ok, %{body: error}} ->
         error |> inspect |> Logger.error()
+        {:error, error}
 
       {:error, error} ->
         error |> inspect |> Logger.error()
+        {:error, error}
     end
   end
 
@@ -115,6 +119,7 @@ defmodule Service.Spotify do
     0..total_tracks//50
     |> Enum.map(fn offset ->
       # TODO: put these under a `DynamicSupervisor` so we can monitor
+      # TODO: do some error handling, maybe raise an error
       Task.async(fn -> paginate_saved_tracks(client, offset) end)
     end)
     # account for the rate limiting delays
