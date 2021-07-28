@@ -71,26 +71,35 @@ defmodule Service.Spotify do
   end
 
   @doc """
-  Get all saved tracks for the authenticated spotify user.
+  Get all saved tracks for the authenticated spotify user given the most recent
+  track time in the database. Prevents hitting the api unnecessarily.
+  Automatically paginates through all the pages.
 
-  Automatically paginates
+  ## Examples
+
+      iex> user = Accounts.get_user_by_id!(1)
+      %User{}
+
+      iex> saved_tracks(client, user.most_recent_track)
+      [%{}, %{}, %{}, ...]
+
   """
   # TODO: implement some telemetry for all this
-  # TODO: some kind of date checking function so we only grab the most recent needed tracks
-  def saved_tracks(client) do
-    # get the total number of tracks we need to grab and then build a list to
-    # paginate by
+  def saved_tracks(client, latest_track_date) do
+    # get the total number of tracks we need to grab and the most recent date
     case get(client, "/me/tracks", query: [limit: 1]) do
-      {:ok, %{status: 200, body: %{"total" => total_tracks}}} ->
-        # generate an array of offset numbers and map over it with http requests
-        # then run a `Task` for each of them to run in parallel.
-        0..total_tracks//50
-        |> Enum.map(fn offset ->
-          Task.async(fn -> paginate_saved_tracks(client, offset) end)
-        end)
-        # account for the rate limiting delays
-        |> Task.await_many(:infinity)
-        |> Enum.concat()
+      {:ok, %{status: 200, body: %{"total" => total_tracks} = body}} ->
+        most_recent_track =
+          body["items"]
+          |> List.first()
+          |> Map.get("added_at")
+          |> NaiveDateTime.from_iso8601!()
+
+        # if the most recent track added to the library is more recent than the
+        # saved track in the database, then get the saved tracks
+        if NaiveDateTime.compare(most_recent_track, latest_track_date) == :gt do
+          get_saved_tracks(client, total_tracks)
+        end
 
       {:ok, %{body: error}} ->
         error |> inspect |> Logger.error()
@@ -98,6 +107,19 @@ defmodule Service.Spotify do
       {:error, error} ->
         error |> inspect |> Logger.error()
     end
+  end
+
+  defp get_saved_tracks(client, total_tracks) do
+    # generate a range of offset numbers and map over it with http requests
+    # then run a `Task` for each of them to run in parallel.
+    0..total_tracks//50
+    |> Enum.map(fn offset ->
+      # TODO: put these under a `DynamicSupervisor` so we can monitor
+      Task.async(fn -> paginate_saved_tracks(client, offset) end)
+    end)
+    # account for the rate limiting delays
+    |> Task.await_many(:infinity)
+    |> Enum.concat()
   end
 
   # some recursive shenanigans that retry a request when we get rate limited
