@@ -41,20 +41,31 @@ defmodule Service.Spotify do
   @doc """
   Generate a `Tesla` client with a users access token. Also checks that the
   token is valid, if it is expired, refresh it automatically.
+
+  ## Examples
+
+      iex> user = Accounts.get_user_by_id!(1)
+      %User{}
+
+      iex> Spotify.authenticated_client(user)
+      %Tesla.Client{}
+
   """
-  def authenticated_client(%User{spotify_access_token: old_token} = user) do
+  def authenticated_client(%User{spotify_access_token: old_token, username: username} = user) do
     if Accounts.User.spotify_token_expired?(user) do
       {:ok, %User{spotify_access_token: new_token}} = Accounts.refresh_spotify_token(user)
-      authenticated_client(new_token)
+      authenticated_client(new_token, username)
     else
-      authenticated_client(old_token)
+      authenticated_client(old_token, username)
     end
   end
 
-  def authenticated_client(access_token) do
+  def authenticated_client(access_token, username \\ nil) do
     middleware = [
       {Tesla.Middleware.BaseUrl, "https://api.spotify.com/v1"},
       {Tesla.Middleware.BearerAuth, token: access_token},
+      {Tesla.Middleware.Opts, [username: username]},
+      {MusicSync.Middleware.Cache, :username},
       Tesla.Middleware.JSON,
       Tesla.Middleware.Logger,
       {Tesla.Middleware.Telemetry, metadata: %{client: "spotify.auth"}}
@@ -139,9 +150,14 @@ defmodule Service.Spotify do
       # we are rate limited if we get a 429 status code and then have to peek into
       # the Retry-After header to wait than many seconds
       {:ok, %{status: 429} = resp} ->
-        {_, delay} = List.keyfind(resp.headers, "retry-after", 0, "1")
-        delay = String.to_integer(delay)
-        :timer.sleep(delay * 1000)
+        delay =
+          resp
+          |> Tesla.get_header("retry-after")
+          |> String.to_integer()
+          |> :timer.seconds()
+
+        Logger.debug("rate limited on #{offset} waiting #{delay}ms")
+        :timer.sleep(delay)
         paginate_saved_tracks(client, offset, retries + 1)
 
       {:error, resp} ->

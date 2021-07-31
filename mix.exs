@@ -38,7 +38,6 @@ defmodule MusicSync.MixProject do
       {:ecto_sql, "~> 3.4"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_html, "~> 2.11"},
-      {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_dashboard, "~> 0.4"},
       {:telemetry_metrics, "~> 0.4"},
       {:telemetry_poller, "~> 0.4"},
@@ -49,6 +48,10 @@ defmodule MusicSync.MixProject do
       {:plug_cowboy, "~> 2.0"},
       {:tesla, "~> 1.4.2"},
       {:finch, "~> 0.7"},
+      {:cachex, "~> 3.3"},
+
+      # non prod
+      {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:credo, "~> 1.5", only: [:dev, :test], runtime: false}
     ]
   end

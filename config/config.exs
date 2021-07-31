@@ -27,6 +27,7 @@ config :logger, :console,
 config :phoenix, :json_library, Jason
 
 config :music_sync, MusicSync.Spotify,
+  cache: :spotify_api_cache,
   client_id: "20cf26fd82a84e02a34e9cfa891d29d6",
   client_secret: "2a7f0ceb011d43a0bd249acbf0621991"
 

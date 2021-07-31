@@ -5,6 +5,8 @@ defmodule MusicSync.Application do
 
   use Application
 
+  @cache_name Application.compile_env!(:music_sync, [MusicSync.Spotify, :cache])
+
   def start(_type, _args) do
     children = [
       # Start the prometheus reporter,
@@ -18,7 +20,9 @@ defmodule MusicSync.Application do
       # Start the Endpoint (http/https)
       MusicSyncWeb.Endpoint,
       # Start the Finch client (http client)
-      {Finch, name: MusicSync.Finch, pools: %{default: [max_idle_time: 120_000]}}
+      {Finch, name: MusicSync.Finch, pools: %{default: [max_idle_time: 120_000]}},
+      # Start the spotify response cache
+      {Cachex, name: @cache_name, stats: true}
       # Start a worker by calling: MusicSync.Worker.start_link(arg)
       # {MusicSync.Worker, arg}
     ]
