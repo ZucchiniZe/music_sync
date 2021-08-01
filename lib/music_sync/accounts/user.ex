@@ -13,6 +13,8 @@ defmodule MusicSync.Accounts.User do
     field :spotify_token_expiry, :naive_datetime
     field :lastfm_session_key, :string
 
+    many_to_many :songs, MusicSync.Tracks.Song, join_through: "users_songs"
+
     timestamps()
   end
 

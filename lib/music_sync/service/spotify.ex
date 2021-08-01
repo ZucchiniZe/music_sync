@@ -92,7 +92,7 @@ defmodule Service.Spotify do
       %User{}
 
       iex> saved_tracks(client, user.most_recent_track)
-      [%{}, %{}, %{}, ...]
+      {:ok, [%{}, %{}, %{}, ...]}
 
   """
   # TODO: implement some telemetry for all this
