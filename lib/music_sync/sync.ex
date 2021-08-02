@@ -20,6 +20,8 @@ defmodule MusicSync.Sync do
   Transforms the tracks into neatly formed changesets and updated the
   `spotify_latest_track` field on the user to the most recent song.
 
+  Returns a list of properly formatted maps for batch insertion.
+
   outside services:
   - x spotify api
   - o lastfm api
@@ -36,39 +38,36 @@ defmodule MusicSync.Sync do
   end
 
   @doc """
-  Takes a list of song changesets and a user and attaches them together using
-  the database.
+  Takes a list of song changesets and a user and adds associations between the
+  two.
+
+  ## Notes
+
+  implemented using an `Ecto.Multi` transaction, this should be very performant,
+  only executing two calls where the info is all batched up. The downside to
+  this strategy is that if we have any malformed data, the database rejects the
+  changes and errors out.
 
   outside services:
   - o spotify api
   - o lastfm api
-  - x database (many call)
+  - x database (two calls!!)
   """
   def add_songs_to_user(songs, %User{} = user) do
     now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
     timestamps = %{inserted_at: now, updated_at: now}
 
+    # genarate the inserted records - assume that these can't be malformed
     songs = Enum.map(songs, &Map.merge(&1, timestamps))
+    song_ids = Enum.map(songs, & &1.id)
+    user_songs = Enum.map(song_ids, &%{user_id: user.id, song_id: &1})
 
     Multi.new()
-    |> Multi.run(:songs, fn _repo, _changes ->
-      Repo.insert_all(Song, songs,
-        on_conflict: {:replace, Map.keys(timestamps)},
-        conflict_target: [:id]
-      )
-
-      song_ids = Enum.map(songs, & &1.id)
-      query = from s in Song, where: s.id in ^song_ids
-
-      {:ok, Repo.all(query)}
-    end)
-    |> Multi.run(:user, fn _repo, %{songs: songs} ->
-      user
-      |> Repo.preload(:songs)
-      |> Ecto.Changeset.change()
-      |> Ecto.Changeset.put_assoc(:songs, songs)
-      |> Repo.update()
-    end)
+    |> Multi.insert_all(:songs, Song, songs,
+      on_conflict: {:replace, [:updated_at]},
+      conflict_target: [:id]
+    )
+    |> Multi.insert_all(:user_songs, "users_songs", user_songs, on_conflict: :nothing)
     |> Repo.transaction()
   end
 end
