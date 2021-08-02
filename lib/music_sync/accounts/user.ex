@@ -36,9 +36,9 @@ defmodule MusicSync.Accounts.User do
     ])
     |> validate_required([:email, :name, :username])
     |> validate_length(:lastfm_session_key, is: 32)
-    |> validate_length(:spotify_access_token, is: 176)
+    |> validate_length(:spotify_access_token, min: 150)
     |> validate_format(:spotify_access_token, ~r/[A-Za-z-_0-9]\w+/)
-    |> validate_length(:spotify_refresh_token, is: 131)
+    |> validate_length(:spotify_refresh_token, min: 120)
     |> validate_format(:spotify_refresh_token, ~r/[A-Za-z-_0-9]\w+/)
     |> unique_constraint([:username, :email])
   end
