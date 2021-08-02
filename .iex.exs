@@ -1,4 +1,4 @@
-alias MusicSync.{Accounts, Tracks}
+alias MusicSync.{Repo, Accounts, Tracks}
 alias Service.{Lastfm, Spotify}
 
 me = Accounts.get_user_by_id!(1)

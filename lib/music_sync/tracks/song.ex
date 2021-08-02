@@ -20,4 +20,19 @@ defmodule MusicSync.Tracks.Song do
     |> validate_required([:id, :artists, :name, :album])
     |> validate_length(:id, is: 22)
   end
+
+  def parse_spotify_song(api_response) do
+    track = api_response["track"]
+    album = get_in(track, ["album", "name"])
+    artists = Enum.map(track["artists"], & &1["name"])
+    added_at = api_response["added_at"] |> NaiveDateTime.from_iso8601!()
+
+    %{
+      id: track["id"],
+      name: track["name"],
+      album: album,
+      artists: artists,
+      added_at: added_at
+    }
+  end
 end

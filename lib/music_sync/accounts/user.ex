@@ -12,6 +12,8 @@ defmodule MusicSync.Accounts.User do
     field :spotify_refresh_token, :string
     field :spotify_token_expiry, :naive_datetime
     field :lastfm_session_key, :string
+    # take a guess when spotify was founded ;-)
+    field :spotify_latest_track, :naive_datetime, default: ~N[2006-04-23 00:00:00]
 
     many_to_many :songs, MusicSync.Tracks.Song, join_through: "users_songs"
 
@@ -29,7 +31,8 @@ defmodule MusicSync.Accounts.User do
       :spotify_access_token,
       :spotify_refresh_token,
       :spotify_token_expiry,
-      :lastfm_session_key
+      :lastfm_session_key,
+      :spotify_latest_track
     ])
     |> validate_required([:email, :name, :username])
     |> validate_length(:lastfm_session_key, is: 32)
