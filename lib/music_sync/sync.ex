@@ -70,4 +70,29 @@ defmodule MusicSync.Sync do
     |> Multi.insert_all(:user_songs, "users_songs", user_songs, on_conflict: :nothing)
     |> Repo.transaction()
   end
+
+  @doc """
+  Takes two lists of songs and returns a map of songs that were added and that
+  were deletes in comparison to the `orignal` list.
+
+  outside services:
+  - o spotify api
+  - o lastfm api
+  - x database (two calls)
+  """
+  def diff_song_lists(original, new) do
+    original = Enum.map(original, & &1.id) |> MapSet.new()
+    new = Enum.map(new, & &1.id) |> MapSet.new()
+
+    added_ids = MapSet.difference(new, original) |> MapSet.to_list()
+    deleted_ids = MapSet.difference(original, new) |> MapSet.to_list()
+
+    added_query = from s in Song, where: s.id in ^added_ids
+    deleted_query = from s in Song, where: s.id in ^deleted_ids
+
+    %{
+      added: Repo.all(added_query),
+      deleted: Repo.all(deleted_query)
+    }
+  end
 end
