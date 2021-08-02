@@ -21,18 +21,22 @@ defmodule MusicSync.Tracks.Song do
     |> validate_length(:id, is: 22)
   end
 
+  @doc """
+  Takes a big spotify [TrackObject][trackobject] and turns it into a `%Song{}`
+  changeset
+
+  [trackobject]: https://developer.spotify.com/documentation/web-api/reference/#object-trackobject
+  """
   def parse_spotify_song(api_response) do
     track = api_response["track"]
-    album = get_in(track, ["album", "name"])
-    artists = Enum.map(track["artists"], & &1["name"])
-    added_at = api_response["added_at"] |> NaiveDateTime.from_iso8601!()
 
-    %{
+    attrs = %{
       id: track["id"],
       name: track["name"],
-      album: album,
-      artists: artists,
-      added_at: added_at
+      album: get_in(track, ["album", "name"]),
+      artists: Enum.map(track["artists"], & &1["name"])
     }
+
+    changeset(%__MODULE__{}, attrs)
   end
 end
