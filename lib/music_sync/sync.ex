@@ -7,6 +7,7 @@ defmodule MusicSync.Sync do
   reference.
   """
   import Ecto.Query, warn: false
+  alias Ecto.Multi
   alias MusicSync.Repo
 
   alias MusicSync.Tracks.Song
@@ -44,12 +45,30 @@ defmodule MusicSync.Sync do
   - x database (many call)
   """
   def add_songs_to_user(songs, %User{} = user) do
-    inserted_songs = Enum.map(songs, &Repo.insert!(&1, on_conflict: :nothing))
+    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+    timestamps = %{inserted_at: now, updated_at: now}
 
-    user
-    |> Repo.preload(:songs)
-    |> Ecto.Changeset.change()
-    |> Ecto.Changeset.put_assoc(:songs, inserted_songs)
-    |> Repo.update!()
+    songs = Enum.map(songs, &Map.merge(&1, timestamps))
+
+    Multi.new()
+    |> Multi.run(:songs, fn _repo, _changes ->
+      Repo.insert_all(Song, songs,
+        on_conflict: {:replace, Map.keys(timestamps)},
+        conflict_target: [:id]
+      )
+
+      song_ids = Enum.map(songs, & &1.id)
+      query = from s in Song, where: s.id in ^song_ids
+
+      {:ok, Repo.all(query)}
+    end)
+    |> Multi.run(:user, fn _repo, %{songs: songs} ->
+      user
+      |> Repo.preload(:songs)
+      |> Ecto.Changeset.change()
+      |> Ecto.Changeset.put_assoc(:songs, songs)
+      |> Repo.update()
+    end)
+    |> Repo.transaction()
   end
 end

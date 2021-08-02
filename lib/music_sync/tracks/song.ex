@@ -22,21 +22,18 @@ defmodule MusicSync.Tracks.Song do
   end
 
   @doc """
-  Takes a big spotify [TrackObject][trackobject] and turns it into a `%Song{}`
-  changeset
+  Takes a big spotify [TrackObject][trackobject] and turns it into a neat map
 
   [trackobject]: https://developer.spotify.com/documentation/web-api/reference/#object-trackobject
   """
   def parse_spotify_song(api_response) do
     track = api_response["track"]
 
-    attrs = %{
+    %{
       id: track["id"],
       name: track["name"],
       album: get_in(track, ["album", "name"]),
       artists: Enum.map(track["artists"], & &1["name"])
     }
-
-    changeset(%__MODULE__{}, attrs)
   end
 end
