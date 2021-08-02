@@ -22,7 +22,8 @@ defmodule MusicSync.Application do
       # Start the Finch client (http client)
       {Finch, name: MusicSync.Finch, pools: %{default: [max_idle_time: 120_000]}},
       # Start the spotify response cache
-      {Cachex, name: @cache_name, stats: true}
+      {Cachex, name: @cache_name, stats: true},
+      {Task.Supervisor, name: MusicSync.TaskSupervisor}
       # Start a worker by calling: MusicSync.Worker.start_link(arg)
       # {MusicSync.Worker, arg}
     ]

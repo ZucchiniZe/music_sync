@@ -124,18 +124,19 @@ defmodule Service.Spotify do
     end
   end
 
+  # generate a range of offset numbers and map over it with http requests then
+  # run an async_stream/5 over it so we get auto parrallelization.
   defp get_saved_tracks(client, total_tracks) do
-    # generate a range of offset numbers and map over it with http requests
-    # then run a `Task` for each of them to run in parallel.
-    0..total_tracks//50
-    |> Enum.map(fn offset ->
-      # TODO: put these under a `DynamicSupervisor` so we can monitor
-      # TODO: do some error handling, maybe raise an error
-      Task.async(fn -> paginate_saved_tracks(client, offset) end)
-    end)
-    # account for the rate limiting delays
-    |> Task.await_many(:infinity)
-    |> Enum.concat()
+    # TODO: put these under a `DynamicSupervisor` so we can monitor
+    Task.Supervisor.async_stream(
+      MusicSync.TaskSupervisor,
+      0..total_tracks//50,
+      &paginate_saved_tracks(client, &1),
+      timeout: :timer.seconds(30)
+    )
+    |> Stream.map(fn {:ok, val} -> val end)
+    |> Stream.concat()
+    |> Enum.to_list()
   end
 
   # some recursive shenanigans that retry a request when we get rate limited
@@ -148,15 +149,16 @@ defmodule Service.Spotify do
         items
 
       # we are rate limited if we get a 429 status code and then have to peek into
-      # the Retry-After header to wait than many seconds
+      # the Retry-After header to wait than many seconds + 1
       {:ok, %{status: 429} = resp} ->
         delay =
           resp
           |> Tesla.get_header("retry-after")
           |> String.to_integer()
+          |> Kernel.+(1)
           |> :timer.seconds()
 
-        Logger.debug("rate limited on #{offset} waiting #{delay}ms")
+        Logger.debug("retry ##{retries}: rate limited on #{offset} waiting #{delay}ms")
         :timer.sleep(delay)
         paginate_saved_tracks(client, offset, retries + 1)
 
