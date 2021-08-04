@@ -5,6 +5,22 @@ defmodule MusicSync.Sync do
 
   Each function should mark what outside services it interacts with for quick
   reference.
+
+  ## Reference
+
+  Here is how the flow of operations should work.
+
+      iex> user = Accounts.get_user_by_id!(1) |> Repo.preload(:songs)
+      %User{}
+
+      iex> user_new_songs = Sync.saved_songs_from_spotify_for_user(user)
+      [%{}, %{}, %{}, ...]
+
+      iex> {:ok, _} = Sync.add_songs_to_user(user_new_songs, user)
+      {:ok, %{songs: {num_new_songs, nil}, user_songs: {num_new_user_songs, nil}}}
+
+      iex> diff = Sync.diff_song_lists(user.songs, user_new_songs)
+      %{added: [%Song{}, %Song{}, ...], deleted: [%Song{}, %Song{}, ...]}
   """
   import Ecto.Query, warn: false
   alias Ecto.Multi
@@ -81,8 +97,8 @@ defmodule MusicSync.Sync do
   - x database (two calls)
   """
   def diff_song_lists(original, new) do
-    original = Enum.map(original, & &1.id) |> MapSet.new()
-    new = Enum.map(new, & &1.id) |> MapSet.new()
+    original = MapSet.new(original, & &1.id)
+    new = MapSet.new(new, & &1.id)
 
     added_ids = MapSet.difference(new, original) |> MapSet.to_list()
     deleted_ids = MapSet.difference(original, new) |> MapSet.to_list()

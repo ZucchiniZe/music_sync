@@ -95,21 +95,36 @@ defmodule Service.Spotify do
       {:ok, [%{}, %{}, %{}, ...]}
 
   """
-  # TODO: implement some telemetry for all this
   def saved_tracks(client, latest_track_date) do
     # get the total number of tracks we need to grab and the most recent date
     case get(client, "/me/tracks", query: [limit: 1]) do
-      {:ok, %{status: 200, body: %{"total" => total_tracks} = body}} ->
+      {:ok, %{status: 200, opts: opts, body: %{"total" => total_tracks} = body}} ->
         most_recent_track =
           body["items"]
           |> List.first()
           |> Map.get("added_at")
           |> NaiveDateTime.from_iso8601!()
 
+        username = opts[:username]
+
         # if the most recent track added to the library is more recent than the
         # saved track in the database, then get the saved tracks
-        if NaiveDateTime.compare(most_recent_track, latest_track_date) == :gt do
-          {:ok, get_saved_tracks(client, total_tracks)}
+        if NaiveDateTime.compare(most_recent_track, latest_track_date) in [:gt, :eq] do
+          tracks =
+            :telemetry.span(
+              [:music_sync, :spotify_saved_tracks],
+              %{
+                total_tracks: total_tracks,
+                pages: Float.ceil(total_tracks / 50) |> trunc,
+                user: username
+              },
+              fn ->
+                tracks = get_saved_tracks(client, total_tracks, username)
+                {tracks, %{tracks_in_library: length(tracks)}}
+              end
+            )
+
+          {:ok, tracks}
         else
           {:error, "no recent tracks"}
         end
@@ -126,12 +141,11 @@ defmodule Service.Spotify do
 
   # generate a range of offset numbers and map over it with http requests then
   # run an async_stream/5 over it so we get auto parrallelization.
-  defp get_saved_tracks(client, total_tracks) do
-    # TODO: put these under a `DynamicSupervisor` so we can monitor
+  defp get_saved_tracks(client, total_tracks, username) do
     Task.Supervisor.async_stream(
       MusicSync.TaskSupervisor,
       0..total_tracks//50,
-      &paginate_saved_tracks(client, &1),
+      &paginate_saved_tracks(client, &1, username),
       timeout: :timer.seconds(30)
     )
     |> Stream.map(fn {:ok, val} -> val end)
@@ -140,17 +154,35 @@ defmodule Service.Spotify do
   end
 
   # some recursive shenanigans that retry a request when we get rate limited
-  defp paginate_saved_tracks(client, offset, retries \\ 0) when retries <= 10 do
+  defp paginate_saved_tracks(client, offset, username, retries \\ 0) when retries <= 10 do
     # we _really_ don't need to log these requests
     client = %Tesla.Client{client | pre: List.keydelete(client.pre, Tesla.Middleware.Logger, 0)}
+    start_time = System.monotonic_time()
+    metadata = %{user: username, page: (offset / 50) |> trunc, retry: retries}
+
+    :telemetry.execute(
+      [:music_sync, :spotify_saved_tracks_page, :start],
+      %{system_time: System.system_time()},
+      metadata
+    )
 
     case get(client, "/me/tracks", query: [offset: offset, limit: 50]) do
       {:ok, %{status: 200, body: %{"items" => items}}} ->
+        duration = System.monotonic_time() - start_time
+
+        :telemetry.execute(
+          [:music_sync, :spotify_saved_tracks_page, :stop],
+          %{duration: duration},
+          metadata
+        )
+
         items
 
       # we are rate limited if we get a 429 status code and then have to peek into
       # the Retry-After header to wait than many seconds + 1
       {:ok, %{status: 429} = resp} ->
+        duration = System.monotonic_time() - start_time
+
         delay =
           resp
           |> Tesla.get_header("retry-after")
@@ -158,9 +190,19 @@ defmodule Service.Spotify do
           |> Kernel.+(1)
           |> :timer.seconds()
 
-        Logger.debug("retry ##{retries}: rate limited on #{offset} waiting #{delay}ms")
+        :telemetry.execute(
+          [:music_sync, :spotify_saved_tracks_page, :rate_limit],
+          %{
+            retry_after: delay - :timer.seconds(1),
+            delay: delay,
+            duration: duration
+          },
+          metadata
+        )
+
+        # Logger.debug("retry ##{retries}: rate limited on #{offset} waiting #{delay}ms")
         :timer.sleep(delay)
-        paginate_saved_tracks(client, offset, retries + 1)
+        paginate_saved_tracks(client, offset, username, retries + 1)
 
       {:error, resp} ->
         Logger.error("hit an error with offset #{offset}")
