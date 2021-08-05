@@ -65,8 +65,9 @@ defmodule Service.Spotify do
     middleware = [
       {Tesla.Middleware.BaseUrl, "https://api.spotify.com/v1"},
       {Tesla.Middleware.BearerAuth, token: access_token},
-      {Tesla.Middleware.Opts, [username: username]},
+      {Tesla.Middleware.Opts, [username: username, service: :spotify]},
       {MusicSync.Middleware.Cache, :username},
+      {MusicSync.Middleware.RateLimit, [limit: 10, per: 2_500]},
       Tesla.Middleware.JSON,
       Tesla.Middleware.Logger,
       {Tesla.Middleware.Telemetry, metadata: %{client: "spotify.auth"}}

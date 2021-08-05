@@ -20,7 +20,7 @@ defmodule MusicSync.MixProject do
   def application do
     [
       mod: {MusicSync.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :ex_rated]
     ]
   end
 
@@ -49,6 +49,7 @@ defmodule MusicSync.MixProject do
       {:tesla, "~> 1.4.2"},
       {:finch, "~> 0.7"},
       {:cachex, "~> 3.3"},
+      {:ex_rated, "~> 2.0"},
 
       # non prod
       {:phoenix_live_reload, "~> 1.2", only: :dev},
