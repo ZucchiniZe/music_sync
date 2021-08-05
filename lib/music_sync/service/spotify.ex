@@ -7,6 +7,7 @@ defmodule Service.Spotify do
   """
   use Tesla
   require Logger
+  alias MusicSync.Telemetry
   alias MusicSync.Accounts
   alias MusicSync.Accounts.User
 
@@ -157,24 +158,13 @@ defmodule Service.Spotify do
   defp saved_tracks_page(client, offset, username, retries \\ 0) when retries <= 10 do
     # we _really_ don't need to log these requests
     client = %Tesla.Client{client | pre: List.keydelete(client.pre, Tesla.Middleware.Logger, 0)}
-    start_time = System.monotonic_time()
     metadata = %{user: username, page: (offset / 50) |> trunc, retry: retries}
 
-    :telemetry.execute(
-      [:music_sync, :spotify_saved_tracks_page, :start],
-      %{system_time: System.system_time()},
-      metadata
-    )
+    start_time = Telemetry.start(:spotify_saved_tracks_page, metadata)
 
     case get(client, "/me/tracks", query: [offset: offset, limit: 50]) do
       {:ok, %{status: 200, body: %{"items" => items}}} ->
-        duration = System.monotonic_time() - start_time
-
-        :telemetry.execute(
-          [:music_sync, :spotify_saved_tracks_page, :stop],
-          %{duration: duration},
-          metadata
-        )
+        Telemetry.stop(:spotify_saved_tracks_page, start_time, metadata)
 
         items
 
@@ -190,8 +180,8 @@ defmodule Service.Spotify do
 
         duration = System.monotonic_time() - start_time
 
-        :telemetry.execute(
-          [:music_sync, :spotify_saved_tracks_page, :rate_limit],
+        Telemetry.event(
+          [:spotify_saved_tracks_page, :rate_limit],
           %{
             retry_after: delay - :timer.seconds(1),
             delay: delay,
