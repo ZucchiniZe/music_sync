@@ -47,7 +47,7 @@ defmodule MusicSync.Sync do
     {:ok, songs} =
       user
       |> Spotify.authenticated_client()
-      |> Spotify.saved_tracks(user.spotify_latest_track)
+      |> Spotify.saved_tracks()
 
     {:ok, _} = Accounts.update_user(user, %{spotify_latest_track: List.first(songs)["added_at"]})
     Enum.map(songs, &Song.parse_spotify_song/1)

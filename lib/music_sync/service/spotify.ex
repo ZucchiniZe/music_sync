@@ -85,51 +85,38 @@ defmodule Service.Spotify do
 
   @doc """
   Get all saved tracks for the authenticated spotify user given the most recent
-  track time in the database. Prevents hitting the api unnecessarily.
-  Automatically paginates through all the pages.
+  track time in the database. Automatically paginates through all the pages.
 
   ## Examples
 
       iex> user = Accounts.get_user_by_id!(1)
       %User{}
 
-      iex> saved_tracks(client, user.most_recent_track)
+      iex> saved_tracks(client)
       {:ok, [%{}, %{}, %{}, ...]}
 
   """
-  def saved_tracks(client, latest_track_date) do
+  def saved_tracks(client) do
     # get the total number of tracks we need to grab and the most recent date
     case get(client, "/me/tracks", query: [limit: 1]) do
-      {:ok, %{status: 200, opts: opts, body: %{"total" => total_tracks} = body}} ->
-        most_recent_track =
-          body["items"]
-          |> List.first()
-          |> Map.get("added_at")
-          |> NaiveDateTime.from_iso8601!()
-
+      {:ok, %{status: 200, opts: opts, body: %{"total" => total_tracks}}} ->
         username = opts[:username]
 
-        # if the most recent track added to the library is more recent than the
-        # saved track in the database, then get the saved tracks
-        if NaiveDateTime.compare(most_recent_track, latest_track_date) in [:gt, :eq] do
-          tracks =
-            :telemetry.span(
-              [:music_sync, :spotify_saved_tracks],
-              %{
-                total_tracks: total_tracks,
-                pages: Float.ceil(total_tracks / 50) |> trunc,
-                user: username
-              },
-              fn ->
-                tracks = paginate_saved_tracks(client, total_tracks, username)
-                {tracks, %{tracks_in_library: length(tracks)}}
-              end
-            )
+        tracks =
+          :telemetry.span(
+            [:music_sync, :spotify_saved_tracks],
+            %{
+              total_tracks: total_tracks,
+              pages: Float.ceil(total_tracks / 50) |> trunc,
+              user: username
+            },
+            fn ->
+              tracks = paginate_saved_tracks(client, total_tracks, username)
+              {tracks, %{tracks_in_library: length(tracks)}}
+            end
+          )
 
-          {:ok, tracks}
-        else
-          {:error, "no recent tracks"}
-        end
+        {:ok, tracks}
 
       {:ok, %{body: error}} ->
         error |> inspect |> Logger.error()
