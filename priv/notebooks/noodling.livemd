@@ -1,0 +1,63 @@
+# Noodling
+
+## Setup
+
+Setup the environment with all the aliases and "global" variables
+
+```elixir
+alias MusicSync.{Repo, Sync, Accounts, Tracks}
+alias Service.{Lastfm, Spotify}
+
+me_nosong = Accounts.get_user_by_id!(1)
+me = me_nosong |> Repo.preload(:songs)
+
+spotify_client = me_nosong |> Spotify.authenticated_client()
+lastfm_client = me_nosong |> Lastfm.authenticated_client()
+
+me_nosong
+```
+
+```elixir
+require Logger
+
+telemetry_handler = fn event, measurements, metadata, _config ->
+  Logger.info("event name: #{inspect(event)}")
+  Logger.debug("measurements: #{inspect(measurements)}")
+  Logger.debug("metadata: #{inspect(metadata)}\n")
+end
+
+bulk_keys =
+  for event <- [:spotify_saved_tracks, :spotify_saved_tracks_page],
+      sub_event <- [:start, :stop],
+      do: [:music_sync, event, sub_event]
+
+keys =
+  [
+    [:music_sync, :middleware, :rate_limit],
+    [:music_sync, :spotify_saved_tracks_page, :rate_limit]
+  ] ++ bulk_keys
+
+# :telemetry.detach("livebook-handler")
+:telemetry.attach_many("livebook-handler", keys, telemetry_handler, nil)
+```
+
+## MusicSync.Sync
+
+```elixir
+# grab the songs from spotify
+new_songs = Sync.saved_songs_from_spotify_for_user(me)
+
+# insert them into the database
+{:ok, _} = Sync.add_songs_to_user(new_songs, me)
+
+# now figure out what songs are new
+diff = Sync.diff_song_lists(me.songs, new_songs)
+```
+
+```elixir
+Cachex.stats!(Spotify.Cache)
+```
+
+```elixir
+{Accounts.get_user_by_id!(1).spotify_latest_track, me.spotify_latest_track}
+```

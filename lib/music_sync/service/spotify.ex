@@ -52,7 +52,7 @@ defmodule Service.Spotify do
       %Tesla.Client{}
 
   """
-  def authenticated_client(%User{spotify_access_token: old_token, username: username} = user) do
+  def authenticated_client(%User{spotify_access_token: old_token, id: username} = user) do
     if Accounts.User.spotify_token_expired?(user) do
       {:ok, %User{spotify_access_token: new_token}} = Accounts.refresh_spotify_token(user)
       authenticated_client(new_token, username)
