@@ -43,7 +43,11 @@ defmodule Service.Lastfm do
         Tesla.Middleware.Query,
         0,
         {Tesla.Middleware.Query, [api_key: @client_id, sk: session_key]}
-      ) ++ [{Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.auth"}}]
+      ) ++
+        [
+          {Tesla.Middleware.Telemetry, metadata: %{client: "lastfm.auth"}},
+          {MusicSync.Middleware.RateLimit, [limit: 10, per: 5_000]}
+        ]
 
     Tesla.client(middleware, @adapter)
   end
@@ -77,5 +81,20 @@ defmodule Service.Lastfm do
   """
   def unlove_track(client, %{artist: artist, track: track}) do
     post(client, "", "", query: [method: "track.unlove", artist: artist, track: track])
+  end
+
+
+  @doc """
+  Gets all the users loved tracks
+
+  ## Examples
+  
+      iex> get_loved_tracks(client)
+      {:ok, Tesla.Env.t()}
+  """
+  # TODO: paginate here like the spotify api
+  # TODO: create a generalized pagination method for both lastfm and spotify
+  def get_loved_tracks(client, %User{lastfm_username: username}) do
+    get(client, "", query: [method: "user.getLovedTracks", user: username])
   end
 end

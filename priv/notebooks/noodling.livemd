@@ -59,5 +59,7 @@ Cachex.stats!(Spotify.Cache)
 ```
 
 ```elixir
-{Accounts.get_user_by_id!(1).spotify_latest_track, me.spotify_latest_track}
+new = Accounts.get_user_by_id!(1).spotify_latest_track
+old = me.spotify_latest_track
+{NaiveDateTime.compare(new, old), new, old}
 ```
