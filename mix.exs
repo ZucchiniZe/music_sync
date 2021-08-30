@@ -7,7 +7,7 @@ defmodule MusicSync.MixProject do
       version: "0.1.0",
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: [:phoenix, :gettext] ++ Mix.compilers(),
+      compilers: [:gettext] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps()
@@ -53,7 +53,8 @@ defmodule MusicSync.MixProject do
 
       # non prod
       {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:credo, "~> 1.5", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.5", only: [:dev, :test], runtime: false},
+      {:esbuild, "~> 0.2", runtime: Mix.env() == :dev}
     ]
   end
 
@@ -68,7 +69,8 @@ defmodule MusicSync.MixProject do
       setup: ["deps.get", "ecto.setup", "cmd npm install --prefix assets"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      "assets.deploy": ["esbuild default --minify", "phx.digest"]
     ]
   end
 end

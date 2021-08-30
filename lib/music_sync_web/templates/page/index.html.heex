@@ -2,10 +2,10 @@
   <h1><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h1>
   <p>Peace of mind from prototype to production</p>
   <%= unless @current_user do %>
-  <a href="<%= Routes.spotify_auth_path @conn, :login %>">login with spotify</a>
+  <a href={Routes.spotify_auth_path @conn, :login}>login with spotify</a>
   <% else %>
-  <a href="<%= Routes.user_path @conn, :show %>">go to profile</a><br>
-  <a href="<%= Routes.user_path @conn, :logout %>">logout</a>
+  <a href={Routes.user_path @conn, :show}>go to profile</a><br>
+  <a href={Routes.user_path @conn, :logout}>logout</a>
   <% end %>
 </section>
 

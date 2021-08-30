@@ -18,6 +18,15 @@ config :music_sync, MusicSyncWeb.Endpoint,
   pubsub_server: MusicSync.PubSub,
   live_view: [signing_salt: "QxRBP9L9"]
 
+# Configure esbuild (the version is required)
+config :esbuild,
+  version: "0.12.18",
+  default: [
+    args: ~w(js/app.js --bundle --target=es2016 --outdir=../priv/static/assets),
+    cd: Path.expand("../assets", __DIR__),
+    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
+  ]
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
